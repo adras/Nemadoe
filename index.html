@@ -8,25 +8,19 @@
     <style>
         :root {
             /* Speed */
-            /* --fade-time: 6s; */ /* TEST */
-            --fade-time: 40s; /* FINAL */
-            /* Base colors (stay bright) */
-            --ink-base: #b7f7ff; /* Text base color */
-            --ui-base: #38f2ff; /* UI base color */
-            --bg-base: #050608; /* Background base color */
-
-            --borderW: 56px; /* twice as wide */
+            --fade-time: 40s;
+            /* Base colors */
+            --ink-base: #b7f7ff;
+            --ui-base: #38f2ff;
+            --bg-base: #050608;
+            --borderW: 56px;
             --radius: 18px;
             --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
             --mono: ui-monospace, Consolas, monospace;
-            /* Fine-tune saturation/glow */
-            --ink-sat: 1.25;
-            --ui-sat: 1.15;
-            --rail-sat: 1.20;
-            /* Hue span (how colorful it can get) */
-            --ink-hue-span: 110deg; /* Text: visible (also red/green), but bright */
-            --ui-hue-span: 70deg; /* UI: less wild */
-            --rail-hue-span: 140deg; /* Rail: allowed more */
+            /* Hue span */
+            --ink-hue-span: 110deg;
+            --ui-hue-span: 70deg;
+            --rail-hue-span: 140deg;
         }
 
         /* Ensure CSS variables animate cleanly */
@@ -42,67 +36,10 @@
             initial-value: 0deg;
         }
 
-        @property --hRail {
-            syntax: "<angle>";
-            inherits: false;
-            initial-value: 0deg;
-        }
-
         @property --hBg {
             syntax: "<angle>";
             inherits: true;
             initial-value: 0deg;
-        }
-
-        /* 3 separate fades (no gradient reversal -> no flicker) */
-        @keyframes inkHue {
-            0% {
-                --hInk: 0deg;
-            }
-            /* Cyan */
-            25% {
-                --hInk: 60deg;
-            }
-            /* Green */
-            50% {
-                --hInk: 140deg;
-            }
-            /* Magenta */
-            75% {
-                --hInk: 60deg;
-            }
-
-            100% {
-                --hInk: 0deg;
-            }
-        }
-
-        @keyframes uiHue {
-            0% {
-                --hUI: 0deg;
-            }
-
-            50% {
-                --hUI: var(--ui-hue-span);
-            }
-
-            100% {
-                --hUI: 0deg;
-            }
-        }
-
-        @keyframes railHue {
-            0% {
-                --hRail: 0deg;
-            }
-
-            50% {
-                --hRail: var(--rail-hue-span);
-            }
-
-            100% {
-                --hRail: 0deg;
-            }
         }
 
         @keyframes bgDrift {
@@ -135,7 +72,7 @@
             grid-template-columns: var(--borderW) 1fr var(--borderW);
         }
 
-        /* Rails: now black & static */
+        /* Rails */
         .rail {
             background: #000;
         }
@@ -153,23 +90,15 @@
             gap: 10px;
             align-items: center;
             padding: 10px 14px;
-            /* neutral reference plane */
             background: rgba(6,8,10,.85);
             color: #b8c7cf;
-            /* quiet downward separation */
             box-shadow: inset 0 -1px 0 rgba(120,255,255,.25), 0 8px 24px rgba(0,0,0,.6);
-            /* deliberately NO animation */
         }
 
         .brand {
             font-weight: 700;
             letter-spacing: .6px;
             color: #d6e2e8;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 8px;
         }
 
         .btn {
@@ -187,10 +116,15 @@
                 color: #e6faff;
             }
 
-        /* Style for select options to match theme */
         select.btn option {
             background: var(--bg-base);
             color: #c9d6dd;
+        }
+
+        .separator {
+            border-left: 1px solid rgba(160,180,190,.35);
+            height: 20px;
+            margin: 0 4px;
         }
 
         .wrap {
@@ -199,7 +133,6 @@
             padding: 18px;
         }
 
-        /* Paper: minimal drift via bgHue (subtle), stays dark */
         .paper {
             border-radius: var(--radius);
             background: rgba(0,0,0,.22);
@@ -207,7 +140,6 @@
             filter: hue-rotate(var(--hBg));
         }
 
-        /* Hint */
         .hint {
             padding: 10px 14px;
             font-size: 12px;
@@ -215,7 +147,6 @@
             color: #9adfff;
         }
 
-        /* Editor: Text gets real color tracking, stays bright */
         @keyframes neonFlow {
             0% {
                 filter: hue-rotate(0deg);
@@ -231,11 +162,9 @@
             outline: none;
             line-height: 1.6;
             font-size: 17px;
-            /* === PERFORMANCE FIXES === */
             contain: content;
             transform: translateZ(0);
             will-change: transform, filter;
-            /* === NEON TEXT === */
             background: linear-gradient( 90deg, var(--neon-a), var(--neon-b), var(--neon-c), var(--neon-a) );
             background-size: 100% 100%;
             background-clip: text;
@@ -248,13 +177,59 @@
 
             .editor h1,
             .editor h2,
-            .editor h3 {
+            .editor h3,
+            .editor h4,
+            .editor h5,
+            .editor h6,
+            .editor h7,
+            .editor h8,
+            .editor h9,
+            .editor h10 {
                 line-height: 1.25;
                 margin: .6em 0 .4em;
                 text-shadow: 0 0 10px rgba(255,180,255,.65), 0 0 26px rgba(255,80,255,.55), 0 0 48px rgba(255,80,255,.45);
             }
 
-            /* Important: do not animate on .editor * -> this causes conflicts */
+            .editor h1 {
+                font-size: 2em;
+            }
+
+            .editor h2 {
+                font-size: 1.5em;
+            }
+
+            .editor h3 {
+                font-size: 1.17em;
+            }
+
+            .editor h4 {
+                font-size: 1em;
+            }
+
+            .editor h5 {
+                font-size: 0.83em;
+            }
+
+            .editor h6 {
+                font-size: 0.67em;
+            }
+
+            .editor h7 {
+                font-size: 0.6em;
+            }
+
+            .editor h8 {
+                font-size: 0.55em;
+            }
+
+            .editor h9 {
+                font-size: 0.5em;
+            }
+
+            .editor h10 {
+                font-size: 0.45em;
+            }
+
             .editor pre {
                 background: rgba(0,0,0,.4);
                 padding: 12px;
@@ -270,28 +245,24 @@
                 font-family: var(--mono);
             }
 
-        /* Status follows UI colors */
         .status {
             padding: 12px 16px;
             font-size: 11px;
             letter-spacing: .3px;
             color: rgba(180,190,195,.65);
             border-top: 1px solid rgba(120,255,255,.18);
-            /* deliberately no animation */
         }
 
         ::selection {
             background: rgba(56,242,255,.35);
         }
 
-        /* --- Neon Palettes (data only, no style break) --- */
         :root {
             --neon-a: #00ffff;
             --neon-b: #7cff00;
             --neon-c: #ff4dff;
         }
     </style>
-
 </head>
 
 <body>
@@ -300,13 +271,28 @@
 
         <div class="center">
             <div class="topbar">
-                <b>NEON WRITER v1.0</b>
+                <b class="brand">NEON WRITER v1.0</b>
                 <button class="btn" onclick="cmd('bold')"><b>B</b></button>
                 <button class="btn" onclick="cmd('italic')"><i>I</i></button>
+
+                <span class="separator"></span>
+                <button class="btn" onclick="setHeading('p')">Normal</button>
+                <span class="separator"></span>
 
                 <button class="btn" onclick="setHeading('h1')">H1</button>
                 <button class="btn" onclick="setHeading('h2')">H2</button>
                 <button class="btn" onclick="setHeading('h3')">H3</button>
+                <button class="btn" onclick="setHeading('h4')">H4</button>
+                <button class="btn" onclick="setHeading('h5')">H5</button>
+
+                <select class="btn" onchange="if(this.value){ setHeading(this.value); this.value=''; }">
+                    <option value="">Hx...</option>
+                    <option value="h6">H6</option>
+                    <option value="h7">H7</option>
+                    <option value="h8">H8</option>
+                    <option value="h9">H9</option>
+                    <option value="h10">H10</option>
+                </select>
 
                 <button class="btn" onclick="cmd('insertUnorderedList')">&bull;</button>
                 <button class="btn" onclick="cmd('insertOrderedList')">1.</button>
@@ -327,7 +313,6 @@
             <div class="wrap">
                 <div class="paper">
                     <div class="hint"></div>
-
                     <div id="editor" class="editor" contenteditable="true" spellcheck="false"></div>
 
                     <div class="status">
@@ -355,7 +340,18 @@
 
         function setHeading(tag) {
             editor.focus();
-            document.execCommand("formatBlock", false, tag);
+            const success = document.execCommand("formatBlock", false, tag);
+
+            /* Fallback for non-standard tags (h7-h10) if the browser rejects them */
+            if (!success && tag.match(/^h\d+$/)) {
+                const sel = window.getSelection();
+                if (sel.rangeCount) {
+                    const range = sel.getRangeAt(0);
+                    const el = document.createElement(tag);
+                    el.appendChild(range.extractContents());
+                    range.insertNode(el);
+                }
+            }
         }
 
         function insertCodeBlock() {
@@ -410,7 +406,7 @@
             ccEl.textContent = [...t].length;
         }
 
-        /* === AUTOSAVE (HTML) === */
+        /* === AUTOSAVE === */
         let timer = null;
 
         editor.addEventListener("input", () => {
@@ -424,7 +420,7 @@
         if (saved) editor.innerHTML = saved;
         updateCounts();
 
-        /* === HTML -> MARKDOWN (minimal, stable) === */
+        /* === HTML -> MARKDOWN === */
         function toMarkdown(node) {
             if (node.nodeType === 3) return node.textContent;
             if (node.nodeType !== 1) return "";
@@ -437,28 +433,32 @@
             if (t === "pre") return `\n\`\`\`\n${node.innerText}\n\`\`\`\n`;
             if (t === "ul") return "\n" + [...node.children].map(li => `- ${li.innerText}`).join("\n") + "\n";
             if (t === "ol") return "\n" + [...node.children].map((li, i) => `${i + 1}. ${li.innerText}`).join("\n") + "\n";
-            if (t === "h1") return `\n# ${c}\n`;
-            if (t === "h2") return `\n## ${c}\n`;
-            if (t === "h3") return `\n### ${c}\n`;
+
+            /* Handle all headings dynamically up to h10 */
+            if (t.match(/^h\d+$/)) {
+                const level = parseInt(t.substring(1), 10);
+                return `\n${'#'.repeat(level)} ${c}\n`;
+            }
+
             if (t === "div" || t === "p") return `\n${c}\n`;
 
             return c;
         }
 
-        /* === EXPORT WITH SAVE-AS DIALOG === */
+        /* === EXPORT === */
         function exportMD() {
             const md = [...editor.childNodes].map(toMarkdown).join("").trim() + "\n";
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "neon.md";   /* triggers "Save as..." */
+            a.download = "neon.md";
             document.body.appendChild(a);
             a.click();
             a.remove();
             URL.revokeObjectURL(a.href);
         }
 
-        /* === Neon palette randomizer & selector === */
+        /* === NEON THEMES === */
         const NEON_PALETTES = [
             { name: "Cyan / Lime / Magenta", colors: ["#00ffff", "#7cff00", "#ff4dff"] },
             { name: "Aqua / Yellow / Pink", colors: ["#00e5ff", "#ffd000", "#ff5cff"] },
@@ -489,7 +489,6 @@
         function startAutoTheme() {
             clearInterval(themeTimer);
             shuffleNeonPalette();
-            /* gently new partners every 90-150 seconds */
             themeTimer = setInterval(shuffleNeonPalette, 90000 + Math.random() * 60000);
         }
 
@@ -501,12 +500,11 @@
                 startAutoTheme();
             } else {
                 clearInterval(themeTimer);
-                sel.options[0].text = "Auto Random"; /* reset text when not active */
+                sel.options[0].text = "Auto Random";
                 applyPalette(val);
             }
         }
 
-        /* Initialize */
         startAutoTheme();
     </script>
 </body>
