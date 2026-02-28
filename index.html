@@ -442,7 +442,8 @@
             if (t === "ol") return [...node.children].map((li, i) => `${i + 1}. ${li.innerText.trim()}`).join("\n");
             if (t.match(/^h\d+$/)) {
                 const level = parseInt(t.substring(1), 10);
-                return `${"#".repeat(level)} ${c.trim()}`;
+                const text = c.trim();
+                return text ? `${"#".repeat(level)} ${text}` : "";
             }
             if (t === "div" || t === "p") return c.trim();
 
@@ -481,12 +482,12 @@
         }
 
         function markdownToHTML(md) {
-            // Normalize: max one blank line between blocks
             const lines = md.replace(/\n{2,}/g, "\n\n").trim().split("\n");
             const output = [];
             let inCode = false;
             let codeBuf = [];
             let prevWasText = false;
+            let prevWasBlank = false;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
@@ -500,17 +501,22 @@
                         inCode = false;
                         codeBuf = [];
                         prevWasText = false;
+                        prevWasBlank = false;
                     }
                     continue;
                 }
 
                 if (inCode) { codeBuf.push(line); continue; }
 
-                const hMatch = line.match(/^(#{1,10})\s+(.*)/);
+                const hMatch = line.match(/^(#{1,10})\s*(.*)/);
                 if (hMatch) {
-                    const level = hMatch[1].length;
-                    output.push(`<h${level}>${inlineMarkdown(hMatch[2])}</h${level}>`);
+                    const text = hMatch[2].trim();
+                    if (text) {
+                        const level = hMatch[1].length;
+                        output.push(`<h${level}>${inlineMarkdown(text)}</h${level}>`);
+                    }
                     prevWasText = false;
+                    prevWasBlank = false;
                     continue;
                 }
 
@@ -524,6 +530,7 @@
                     output.push(`<ul>${items.join("")}</ul>`);
                     i = j - 1;
                     prevWasText = false;
+                    prevWasBlank = false;
                     continue;
                 }
 
@@ -537,18 +544,20 @@
                     output.push(`<ol>${items.join("")}</ol>`);
                     i = j - 1;
                     prevWasText = false;
+                    prevWasBlank = false;
                     continue;
                 }
 
                 if (line.trim() === "") {
-                    // Insert a single visual blank line only between text paragraphs
-                    if (prevWasText) {
+                    if (prevWasText && !prevWasBlank) {
                         output.push(`<div><br></div>`);
+                        prevWasBlank = true;
                         prevWasText = false;
                     }
                 } else {
                     output.push(`<div>${inlineMarkdown(line)}</div>`);
                     prevWasText = true;
+                    prevWasBlank = false;
                 }
             }
 
@@ -630,6 +639,24 @@
         }
 
         startAutoTheme();
+
+        // --- Keyboard shortcuts ---
+
+        document.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "s") {
+                e.preventDefault();
+                e.stopPropagation();
+                exportMD();
+            }
+        }, true);
+
+        editor.addEventListener("keydown", (e) => {
+            if (e.key === "Tab") {
+                e.preventDefault();
+                e.stopPropagation();
+                document.execCommand("insertHTML", false, "&#160;&#160;&#160;&#160;");
+            }
+        }, true);
     </script>
 </body>
 </html>
