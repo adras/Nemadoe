@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Neon Markdown Writer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  /* Speed */
+  /* --fade-time: 6s; */   /* TEST */
+  --fade-time: 40s;        /* FINAL */
+
+  /* Base colors (stay bright) */
+  --ink-base: #b7f7ff;     /* Text base color */
+  --ui-base:  #38f2ff;     /* UI base color */
+  --bg-base:  #050608;     /* Background base color */
+
+  --borderW:56px;          /* twice as wide */
+  --radius:18px;
+  --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  /* Fine-tune saturation/glow */
+  --ink-sat: 1.25;
+  --ui-sat:  1.15;
+  --rail-sat:1.20;
+
+  /* Hue span (how colorful it can get) */
+  --ink-hue-span: 110deg;   /* Text: visible (also red/green), but bright */
+  --ui-hue-span:  70deg;    /* UI: less wild */
+  --rail-hue-span:140deg;   /* Rail: allowed more */
+}
+
+/* Ensure CSS variables animate cleanly */
+@property --hInk  { syntax: "<angle>"; inherits: true;  initial-value: 0deg; }
+@property --hUI   { syntax: "<angle>"; inherits: true;  initial-value: 0deg; }
+@property --hRail { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --hBg   { syntax: "<angle>"; inherits: true;  initial-value: 0deg; }
+
+/* 3 separate fades (no gradient reversal -> no flicker) */
+@keyframes inkHue {
+  0%   { --hInk:   0deg; }   /* Cyan */
+  25%  { --hInk:  60deg; }   /* Green */
+  50%  { --hInk: 140deg; }   /* Magenta */
+  75%  { --hInk:  60deg; }
+  100% { --hInk:   0deg; }
+}
+@keyframes uiHue {
+  0%   { --hUI: 0deg; }
+  50%  { --hUI: var(--ui-hue-span); }
+  100% { --hUI: 0deg; }
+}
+@keyframes railHue {
+  0%   { --hRail: 0deg; }
+  50%  { --hRail: var(--rail-hue-span); }
+  100% { --hRail: 0deg; }
+}
+@keyframes bgDrift {
+  0%   { --hBg: 0deg; }
+  50%  { --hBg: 25deg; }
+  100% { --hBg: 0deg; }
+}
+
+/* Base */
+html,body{
+  margin:0;
+  height:100%;
+  font-family:var(--font);
+  background: var(--bg-base);
+  overflow:hidden;
+  animation: bgDrift calc(var(--fade-time) * 1.6) ease-in-out infinite;
+}
+
+.frame{
+  height:100%;
+  display:grid;
+  grid-template-columns: var(--borderW) 1fr var(--borderW);
+}
+
+/* Rails: now black & static */
+.rail{
+  background: #000;
+}
+
+/* Center / Layout */
+.center{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.topbar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:10px 14px;
+
+  /* neutral reference plane */
+  background: rgba(6,8,10,.85);
+  color: #b8c7cf;
+
+  /* quiet downward separation */
+  box-shadow:
+    inset 0 -1px 0 rgba(120,255,255,.25),
+    0 8px 24px rgba(0,0,0,.6);
+
+  /* deliberately NO animation */
+}
+.brand{
+  font-weight:700;
+  letter-spacing:.6px;
+  color: #d6e2e8;
+}
+.toolbar{ display:flex; gap:8px; }
+
+.btn{
+  background: transparent;
+  border: 1px solid rgba(160,180,190,.35);
+  border-radius:10px;
+  padding:6px 12px;
+  cursor:pointer;
+
+  color: #c9d6dd;
+
+  text-shadow: none;
+}
+
+.btn:hover{
+  border-color: rgba(120,255,255,.65);
+  color: #e6faff;
+}
+.wrap{
+  flex:1;
+  overflow:auto;
+  padding:18px;
+}
+
+/* Paper: minimal drift via bgHue (subtle), stays dark */
+.paper{
+  border-radius: var(--radius);
+  background: rgba(0,0,0,.22);
+  box-shadow: 0 0 34px rgba(56,242,255,.10), inset 0 0 26px rgba(0,0,0,.55);
+  filter: hue-rotate(var(--hBg));
+}
+
+/* Hint */
+.hint{
+  padding:10px 14px;
+  font-size:12px;
+  opacity:.75;
+  color: #9adfff;
+}
+
+/* Editor: Text gets real color tracking, stays bright */
+@keyframes neonFlow {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.editor{
+  padding:20px 22px 40px;
+  outline:none;
+  line-height:1.6;
+  font-size:17px;
+
+  /* === PERFORMANCE FIXES === */
+  contain: content;
+  transform: translateZ(0);
+  will-change: transform, filter;
+
+  /* === NEON TEXT === */
+  background: linear-gradient(
+    90deg,
+    var(--neon-a),
+    var(--neon-b),
+    var(--neon-c),
+    var(--neon-a)
+  );
+  background-size: 100% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  animation: neonFlow calc(var(--fade-time) * 1.2) linear infinite;
+
+  caret-color: #b7f7ff;
+
+  text-shadow:
+    0 0 6px  rgba(0,255,255,.55),
+    0 0 16px rgba(255,80,255,.45),
+    0 0 36px rgba(255,80,255,.35);
+}
+.editor h1,
+.editor h2,
+.editor h3{
+  line-height:1.25;
+  margin: .6em 0 .4em;
+  text-shadow:
+    0 0 10px rgba(255,180,255,.65),
+    0 0 26px rgba(255,80,255,.55),
+    0 0 48px rgba(255,80,255,.45);
+}
+
+/* Important: do not animate on .editor * -> this causes conflicts */
+.editor pre{
+  background: rgba(0,0,0,.4);
+  padding:12px;
+  border-radius:10px;
+  text-shadow: none;
+  -webkit-text-fill-color: var(--ink-base);
+  color: var(--ink-base);
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+}
+.editor code{ font-family: var(--mono); }
+
+/* Status follows UI colors */
+.status{
+  padding:12px 16px;
+  font-size:11px;
+  letter-spacing:.3px;
+
+  color: rgba(180,190,195,.65);
+
+  border-top:1px solid rgba(120,255,255,.18);
+
+  /* deliberately no animation */
+}
+::selection{ background: rgba(56,242,255,.35); }
+
+/* --- Neon Palettes (data only, no style break) --- */
+:root{
+  --neon-a: #00ffff;
+  --neon-b: #7cff00;
+  --neon-c: #ff4dff;
+}
+</style>
+
+</head>
+
+<body>
+<div class="frame">
+  <div class="rail"></div>
+
+  <div class="center">
+    <div class="topbar">
+      <b>NEON WRITER v1.0</b>
+		<button class="btn" onclick="cmd('bold')"><b>B</b></button>
+		<button class="btn" onclick="cmd('italic')"><i>I</i></button>
+
+		<button class="btn" onclick="setHeading('h1')">H1</button>
+		<button class="btn" onclick="setHeading('h2')">H2</button>
+		<button class="btn" onclick="setHeading('h3')">H3</button>
+
+		<button class="btn" onclick="cmd('insertUnorderedList')">&bull;</button>
+		<button class="btn" onclick="cmd('insertOrderedList')">1.</button>
+		<button class="btn" onclick="insertCodeBlock()">code</button>
+
+		<button class="btn" onclick="exportMD()">Export .md</button>
+
+    </div>
+
+    <div class="wrap">
+      <div class="paper">
+        <div class="hint"></div>
+
+        <div id="editor" class="editor" contenteditable="true" spellcheck="false"></div>
+
+		<div class="status">
+		  W�rter <b id="wc">0</b> � Zeichen <b id="cc">0</b>
+		</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rail"></div>
+</div>
+
+<script>
+const editor = document.getElementById("editor");
+const wcEl = document.getElementById("wc");
+const ccEl = document.getElementById("cc");
+
+const KEY = "neon_writer_md_v3";
+
+/* === WYSIWYG === */
+function cmd(c,v=null){
+  editor.focus();
+  document.execCommand(c,false,v);
+}
+
+function setHeading(tag){
+  editor.focus();
+  document.execCommand("formatBlock", false, tag);
+}
+
+function insertCodeBlock(){
+  editor.focus();
+
+  const sel = window.getSelection();
+  if(!sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+
+  let node = sel.anchorNode;
+  while(node && node !== editor){
+    if(node.nodeType === 1 && node.tagName === "PRE"){
+      const fragment = document.createDocumentFragment();
+      while(node.firstChild){
+        fragment.appendChild(node.firstChild);
+      }
+      node.parentNode.replaceChild(fragment, node);
+      return;
+    }
+    node = node.parentNode;
+  }
+
+  const pre = document.createElement("pre");
+
+  if(!range.collapsed){
+    const fragment = range.cloneContents();
+    pre.appendChild(fragment);
+    range.deleteContents();
+    range.insertNode(pre);
+  } else {
+    pre.appendChild(document.createElement("br"));
+    range.insertNode(pre);
+  }
+
+  placeCursorInside(pre);
+}
+
+function placeCursorInside(el){
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(el);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/* === COUNTS === */
+function updateCounts(){
+  const t = editor.textContent || "";
+  wcEl.textContent = t.trim()? t.trim().split(/\s+/u).length : 0;
+  ccEl.textContent = [...t].length;
+}
+
+/* === AUTOSAVE (HTML) === */
+let timer=null;
+
+editor.addEventListener("input",()=>{
+  updateCounts();
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    localStorage.setItem(KEY, editor.innerHTML);
+  }, 300);
+});
+const saved = localStorage.getItem(KEY);
+if(saved) editor.innerHTML=saved;
+updateCounts();
+
+/* === HTML -> MARKDOWN (minimal, stable) === */
+function toMarkdown(node){
+  if(node.nodeType===3) return node.textContent;
+  if(node.nodeType!==1) return "";
+
+  const t=node.tagName.toLowerCase();
+  let c=[...node.childNodes].map(toMarkdown).join("");
+
+  if(t==="b"||t==="strong") return `**${c}**`;
+  if(t==="i"||t==="em") return `*${c}*`;
+  if(t==="pre") return `\n\`\`\`\n${node.innerText}\n\`\`\`\n`;
+  if(t==="ul") return "\n"+[...node.children].map(li=>`- ${li.innerText}`).join("\n")+"\n";
+  if(t==="ol") return "\n"+[...node.children].map((li,i)=>`${i+1}. ${li.innerText}`).join("\n")+"\n";
+	if(t==="h1") return `\n# ${c}\n`;
+	if(t==="h2") return `\n## ${c}\n`;
+	if(t==="h3") return `\n### ${c}\n`;
+	if(t==="div"||t==="p") return `\n${c}\n`;
+
+  return c;
+}
+
+/* === EXPORT WITH SAVE-AS DIALOG === */
+function exportMD(){
+  const md=[...editor.childNodes].map(toMarkdown).join("").trim()+"\n";
+  const blob=new Blob([md],{type:"text/markdown;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="neon.md";   /* triggers "Save as..." */
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+/* === Neon palette randomizer (smooth & safe) === */
+const NEON_PALETTES = [
+  ["#00ffff", "#7cff00", "#ff4dff"], /* cyan / lime / magenta */
+  ["#00e5ff", "#ffd000", "#ff5cff"], /* aqua / yellow / pink */
+  ["#4dffff", "#4dff88", "#b84dff"], /* mint / green / violet */
+  ["#00ffd5", "#9dff00", "#ff6ad5"], /* teal / neon green / rose */
+  ["#3cfffc", "#c6ff00", "#ff3cf5"]  /* prismatic */
+];
+
+function shuffleNeonPalette(){
+  const p = NEON_PALETTES[Math.floor(Math.random() * NEON_PALETTES.length)];
+  document.documentElement.style.setProperty("--neon-a", p[0]);
+  document.documentElement.style.setProperty("--neon-b", p[1]);
+  document.documentElement.style.setProperty("--neon-c", p[2]);
+}
+
+/* gently new partners every 90-150 seconds */
+setInterval(shuffleNeonPalette, 90000 + Math.random()*60000);
+
+/* once initially */
+shuffleNeonPalette();
+</script>
+</body>
+</html>
