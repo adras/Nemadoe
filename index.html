@@ -133,7 +133,6 @@
             border-radius: var(--radius);
             background: rgba(0,0,0,.22);
             box-shadow: 0 0 34px rgba(56,242,255,.10), inset 0 0 26px rgba(0,0,0,.55);
-            filter: hue-rotate(var(--hBg));
         }
 
         .hint {
@@ -145,11 +144,11 @@
 
         @keyframes neonFlow {
             0% {
-                filter: hue-rotate(0deg);
+                background-position: 0% 50%;
             }
 
             100% {
-                filter: hue-rotate(360deg);
+                background-position: 300% 50%;
             }
         }
 
@@ -160,13 +159,13 @@
             font-size: 17px;
             contain: content;
             transform: translateZ(0);
-            will-change: transform, filter;
+            will-change: background-position;
             background: linear-gradient(90deg, var(--neon-a), var(--neon-b), var(--neon-c), var(--neon-a));
-            background-size: 100% 100%;
+            background-size: 300% 100%;
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            animation: neonFlow calc(var(--fade-time) * 1.2) linear infinite;
+            animation: none;
             caret-color: #b7f7ff;
             text-shadow: 0 0 6px rgba(0,255,255,.55), 0 0 16px rgba(255,80,255,.45), 0 0 36px rgba(255,80,255,.35);
         }
@@ -274,10 +273,27 @@
         ::selection {
             background: rgba(56,242,255,.35);
         }
+
+        #fps-overlay {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: rgba(0,255,255,.75);
+            background: rgba(0,0,0,.55);
+            border: 1px solid rgba(0,255,255,.2);
+            border-radius: 8px;
+            padding: 4px 10px;
+            pointer-events: none;
+            z-index: 9999;
+            letter-spacing: .5px;
+        }
     </style>
 </head>
 
 <body>
+    <div id="fps-overlay">⬡ <span id="fps-value">--</span> fps</div>
     <div class="frame">
         <div class="rail"></div>
 
@@ -324,6 +340,7 @@
                     <option value="3">Teal / Green / Rose</option>
                     <option value="4">Prismatic</option>
                 </select>
+                <button class="btn" id="fpsBtn" onclick="toggleFPS()" style="margin-left:8px;font-family:var(--mono);font-size:11px;">fps</button>
             </div>
 
             <div class="wrap">
@@ -707,6 +724,58 @@
                 document.execCommand("insertHTML", false, "&#160;&#160;&#160;&#160;");
             }
         }, true);
+
+        // --- FPS Counter + 60fps Limiter ---
+
+        const TARGET_FPS = 20;
+        const FRAME_INTERVAL = 1000 / TARGET_FPS;
+
+        let fpsVisible = false;
+        let lastFrameTime = 0;
+        let frameCount = 0;
+        let fpsAccum = 0;
+        let lastFpsTick = performance.now();
+
+        const fpsOverlay = document.getElementById("fps-overlay");
+        const fpsValue = document.getElementById("fps-value");
+
+        function toggleFPS() {
+            fpsVisible = !fpsVisible;
+            fpsOverlay.style.display = fpsVisible ? "block" : "none";
+        }
+
+        // JS-driven background-position animation (real 60fps cap)
+        const ANIM_DURATION = parseFloat(getComputedStyle(document.documentElement)
+            .getPropertyValue("--fade-time")) * 1000 * 1.2;
+
+        let animStart = null;
+
+        function fpsLoop(now) {
+            requestAnimationFrame(fpsLoop);
+
+            const elapsed = now - lastFrameTime;
+            if (elapsed < FRAME_INTERVAL - 0.5) return; // skip frame — enforces 60fps cap
+
+            lastFrameTime = now - (elapsed % FRAME_INTERVAL);
+
+            // Drive background-position manually
+            if (animStart === null) animStart = now;
+            const progress = ((now - animStart) % ANIM_DURATION) / ANIM_DURATION;
+            const pos = progress * 300; // 0% → 300%
+            editor.style.backgroundPosition = pos + "% 50%";
+
+            // FPS counter (rolling average over 30 frames)
+            frameCount++;
+            fpsAccum += elapsed;
+            if (frameCount >= 30) {
+                const avg = fpsAccum / frameCount;
+                if (fpsVisible) fpsValue.textContent = Math.round(1000 / avg);
+                frameCount = 0;
+                fpsAccum = 0;
+            }
+        }
+
+        requestAnimationFrame(fpsLoop);
     </script>
 </body>
 </html>
