@@ -253,6 +253,24 @@
                 color: rgba(160,180,190,.45);
             }
 
+        .editor-raw {
+            padding: 20px 22px 40px;
+            outline: none;
+            line-height: 1.6;
+            font-size: 15px;
+            font-family: var(--mono);
+            background: transparent;
+            color: #b7f7ff;
+            caret-color: #b7f7ff;
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            resize: none;
+            min-height: 300px;
+        }
+
         ::selection {
             background: rgba(56,242,255,.35);
         }
@@ -295,6 +313,7 @@
                 <input id="importInput" type="file" accept=".md,text/markdown,text/plain" style="display:none" onchange="importMD(this)" />
                 <button class="btn" onclick="document.getElementById('importInput').click()">Import .md</button>
                 <input id="filenameInput" class="btn filename-input" type="text" placeholder="filename" spellcheck="false" />
+                <button id="toggleViewBtn" class="btn" onclick="toggleRawView()">Raw</button>
                 <button class="btn" onclick="exportMD()">Export .md</button>
 
                 <select class="btn" id="themeSelect" style="margin-left: auto;" onchange="changeTheme()">
@@ -576,10 +595,41 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
+        // --- Raw / formatted toggle ---
+
+        let isRawView = false;
+
+        function toggleRawView() {
+            const btn = document.getElementById("toggleViewBtn");
+            if (!isRawView) {
+                const md = editorToMarkdown();
+                const textarea = document.createElement("textarea");
+                textarea.id = "rawEditor";
+                textarea.className = "editor-raw";
+                textarea.value = md;
+                textarea.style.height = editor.offsetHeight + "px";
+                editor.style.display = "none";
+                editor.parentNode.insertBefore(textarea, editor);
+                btn.textContent = "Formatted";
+                isRawView = true;
+            } else {
+                const textarea = document.getElementById("rawEditor");
+                const md = textarea.value;
+                textarea.remove();
+                editor.style.display = "";
+                editor.innerHTML = markdownToHTML(md);
+                localStorage.setItem(KEY, editor.innerHTML);
+                updateCounts();
+                btn.textContent = "Raw";
+                isRawView = false;
+            }
+        }
+
         // --- Export ---
 
         function exportMD() {
-            const md = editorToMarkdown();
+            const rawEl = document.getElementById("rawEditor");
+            const md = rawEl ? rawEl.value : editorToMarkdown();
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
             const rawName = filenameInput.value.trim() || "neon";
             const filename = rawName.endsWith(".md") ? rawName : rawName + ".md";
