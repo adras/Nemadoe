@@ -27,6 +27,7 @@ Since Nemadeo is a single-file application, getting started is as easy as it get
 
 ## Issues
 * Performance is really poor for larger documents. Be aware of that.
+* Sometimes line breaks are not treated properly. Additional lines may appear or empty lines may disappear.
 
 ## License
 
