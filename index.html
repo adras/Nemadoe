@@ -242,6 +242,17 @@
             border-top: 1px solid rgba(120,255,255,.18);
         }
 
+        .filename-input {
+            width: 130px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-family: var(--mono);
+        }
+
+            .filename-input::placeholder {
+                color: rgba(160,180,190,.45);
+            }
+
         ::selection {
             background: rgba(56,242,255,.35);
         }
@@ -281,6 +292,7 @@
                 <button class="btn" onclick="cmd('insertOrderedList')">1.</button>
                 <button class="btn" onclick="insertCodeBlock()">code</button>
 
+                <input id="filenameInput" class="btn filename-input" type="text" placeholder="filename" spellcheck="false" />
                 <button class="btn" onclick="exportMD()">Export .md</button>
 
                 <select class="btn" id="themeSelect" style="margin-left: auto;" onchange="changeTheme()">
@@ -314,6 +326,18 @@
         const ccEl = document.getElementById("cc");
 
         const KEY = "neon_writer_md_v3";
+        const FILENAME_KEY = "neon_writer_filename";
+
+        // --- Filename input ---
+
+        const filenameInput = document.getElementById("filenameInput");
+
+        const savedFilename = localStorage.getItem(FILENAME_KEY);
+        if (savedFilename) filenameInput.value = savedFilename;
+
+        filenameInput.addEventListener("input", () => {
+            localStorage.setItem(FILENAME_KEY, filenameInput.value);
+        });
 
         // --- WYSIWYG commands ---
 
@@ -426,9 +450,11 @@
         function exportMD() {
             const md = [...editor.childNodes].map(toMarkdown).join("").trim() + "\n";
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+            const rawName = filenameInput.value.trim() || "neon";
+            const filename = rawName.endsWith(".md") ? rawName : rawName + ".md";
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "neon.md";
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             a.remove();
