@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Neon Markdown Writer</title>
+    <title>NEMADEO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
@@ -265,7 +265,7 @@
 
         <div class="center">
             <div class="topbar">
-                <b class="brand">NEON WRITER v1.0</b>
+                <b class="brand">NEMADEO v1.1</b>
                 <button class="btn" onclick="cmd('bold')"><b>B</b></button>
                 <button class="btn" onclick="cmd('italic')"><i>I</i></button>
 
@@ -292,6 +292,8 @@
                 <button class="btn" onclick="cmd('insertOrderedList')">1.</button>
                 <button class="btn" onclick="insertCodeBlock()">code</button>
 
+                <input id="importInput" type="file" accept=".md,text/markdown,text/plain" style="display:none" onchange="importMD(this)" />
+                <button class="btn" onclick="document.getElementById('importInput').click()">Import .md</button>
                 <input id="filenameInput" class="btn filename-input" type="text" placeholder="filename" spellcheck="false" />
                 <button class="btn" onclick="exportMD()">Export .md</button>
 
@@ -431,24 +433,144 @@
             const t = node.tagName.toLowerCase();
             const c = [...node.childNodes].map(toMarkdown).join("");
 
+            if (t === "br") return "";
             if (t === "b" || t === "strong") return `**${c}**`;
             if (t === "i" || t === "em") return `*${c}*`;
-            if (t === "pre") return `\n\`\`\`\n${node.innerText}\n\`\`\`\n`;
-            if (t === "ul") return "\n" + [...node.children].map(li => `- ${li.innerText}`).join("\n") + "\n";
-            if (t === "ol") return "\n" + [...node.children].map((li, i) => `${i + 1}. ${li.innerText}`).join("\n") + "\n";
+            if (t === "code") return `\`${c}\``;
+            if (t === "pre") return `\`\`\`\n${node.innerText.trim()}\n\`\`\``;
+            if (t === "ul") return [...node.children].map(li => `- ${li.innerText.trim()}`).join("\n");
+            if (t === "ol") return [...node.children].map((li, i) => `${i + 1}. ${li.innerText.trim()}`).join("\n");
             if (t.match(/^h\d+$/)) {
                 const level = parseInt(t.substring(1), 10);
-                return `\n${"#".repeat(level)} ${c}\n`;
+                return `${"#".repeat(level)} ${c.trim()}`;
             }
-            if (t === "div" || t === "p") return `\n${c}\n`;
+            if (t === "div" || t === "p") return c.trim();
 
             return c;
+        }
+
+        // Collects top-level blocks, skips empty ones, joins with a single blank line
+        function editorToMarkdown() {
+            const blocks = [];
+            for (const node of editor.childNodes) {
+                const md = toMarkdown(node);
+                if (md.trim()) blocks.push(md);
+            }
+            return blocks.join("\n\n") + "\n";
+        }
+
+        // --- Import ---
+
+        function importMD(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const rawName = file.name.replace(/\.md$/i, "");
+            filenameInput.value = rawName;
+            localStorage.setItem(FILENAME_KEY, rawName);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const html = markdownToHTML(e.target.result);
+                editor.innerHTML = html;
+                localStorage.setItem(KEY, editor.innerHTML);
+                updateCounts();
+            };
+            reader.readAsText(file);
+            input.value = "";
+        }
+
+        function markdownToHTML(md) {
+            // Normalize: max one blank line between blocks
+            const lines = md.replace(/\n{2,}/g, "\n\n").trim().split("\n");
+            const output = [];
+            let inCode = false;
+            let codeBuf = [];
+            let prevWasText = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                if (line.startsWith("```")) {
+                    if (!inCode) {
+                        inCode = true;
+                        codeBuf = [];
+                    } else {
+                        output.push(`<pre>${escapeHTML(codeBuf.join("\n"))}</pre>`);
+                        inCode = false;
+                        codeBuf = [];
+                        prevWasText = false;
+                    }
+                    continue;
+                }
+
+                if (inCode) { codeBuf.push(line); continue; }
+
+                const hMatch = line.match(/^(#{1,10})\s+(.*)/);
+                if (hMatch) {
+                    const level = hMatch[1].length;
+                    output.push(`<h${level}>${inlineMarkdown(hMatch[2])}</h${level}>`);
+                    prevWasText = false;
+                    continue;
+                }
+
+                if (line.startsWith("- ") || line.startsWith("* ")) {
+                    const items = [];
+                    let j = i;
+                    while (j < lines.length && (lines[j].startsWith("- ") || lines[j].startsWith("* "))) {
+                        items.push(`<li>${inlineMarkdown(lines[j].slice(2))}</li>`);
+                        j++;
+                    }
+                    output.push(`<ul>${items.join("")}</ul>`);
+                    i = j - 1;
+                    prevWasText = false;
+                    continue;
+                }
+
+                if (line.match(/^\d+\.\s+(.*)/)) {
+                    const items = [];
+                    let j = i;
+                    while (j < lines.length && lines[j].match(/^\d+\.\s+/)) {
+                        items.push(`<li>${inlineMarkdown(lines[j].replace(/^\d+\.\s+/, ""))}</li>`);
+                        j++;
+                    }
+                    output.push(`<ol>${items.join("")}</ol>`);
+                    i = j - 1;
+                    prevWasText = false;
+                    continue;
+                }
+
+                if (line.trim() === "") {
+                    // Insert a single visual blank line only between text paragraphs
+                    if (prevWasText) {
+                        output.push(`<div><br></div>`);
+                        prevWasText = false;
+                    }
+                } else {
+                    output.push(`<div>${inlineMarkdown(line)}</div>`);
+                    prevWasText = true;
+                }
+            }
+
+            return output.join("");
+        }
+
+        function inlineMarkdown(text) {
+            return text
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+                .replace(/\*(.+?)\*/g, "<i>$1</i>")
+                .replace(/`(.+?)`/g, "<code>$1</code>");
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         // --- Export ---
 
         function exportMD() {
-            const md = [...editor.childNodes].map(toMarkdown).join("").trim() + "\n";
+            const md = editorToMarkdown();
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
             const rawName = filenameInput.value.trim() || "neon";
             const filename = rawName.endsWith(".md") ? rawName : rawName + ".md";
