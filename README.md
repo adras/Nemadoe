@@ -25,6 +25,9 @@ Since Nemadeo is a single-file application, getting started is as easy as it get
 * **CSS3:** Utilizing CSS variables, `@property` for smooth gradient animations, and advanced `text-shadow` / `filter` techniques for the neon glow.
 * **Vanilla JavaScript:** Handling the WYSIWYG commands, local storage logic, DOM manipulation, and HTML-to-Markdown parsing.
 
+## Issues
+* Performance is really poor for larger documents. Be aware of that.
+
 ## License
 
 This project is open-source and available under the [MIT License](LICENSE).
