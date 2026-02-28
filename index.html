@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Neon Markdown Writer</title>
@@ -7,9 +7,7 @@
 
     <style>
         :root {
-            /* Speed */
             --fade-time: 40s;
-            /* Base colors */
             --ink-base: #b7f7ff;
             --ui-base: #38f2ff;
             --bg-base: #050608;
@@ -17,13 +15,14 @@
             --radius: 18px;
             --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
             --mono: ui-monospace, Consolas, monospace;
-            /* Hue span */
             --ink-hue-span: 110deg;
             --ui-hue-span: 70deg;
             --rail-hue-span: 140deg;
+            --neon-a: #00ffff;
+            --neon-b: #7cff00;
+            --neon-c: #ff4dff;
         }
 
-        /* Ensure CSS variables animate cleanly */
         @property --hInk {
             syntax: "<angle>";
             inherits: true;
@@ -56,7 +55,6 @@
             }
         }
 
-        /* Base */
         html, body {
             margin: 0;
             height: 100%;
@@ -72,12 +70,10 @@
             grid-template-columns: var(--borderW) 1fr var(--borderW);
         }
 
-        /* Rails */
         .rail {
             background: #000;
         }
 
-        /* Center / Layout */
         .center {
             height: 100%;
             display: flex;
@@ -165,7 +161,7 @@
             contain: content;
             transform: translateZ(0);
             will-change: transform, filter;
-            background: linear-gradient( 90deg, var(--neon-a), var(--neon-b), var(--neon-c), var(--neon-a) );
+            background: linear-gradient(90deg, var(--neon-a), var(--neon-b), var(--neon-c), var(--neon-a));
             background-size: 100% 100%;
             background-clip: text;
             -webkit-background-clip: text;
@@ -175,16 +171,9 @@
             text-shadow: 0 0 6px rgba(0,255,255,.55), 0 0 16px rgba(255,80,255,.45), 0 0 36px rgba(255,80,255,.35);
         }
 
-            .editor h1,
-            .editor h2,
-            .editor h3,
-            .editor h4,
-            .editor h5,
-            .editor h6,
-            .editor h7,
-            .editor h8,
-            .editor h9,
-            .editor h10 {
+            .editor h1, .editor h2, .editor h3,
+            .editor h4, .editor h5, .editor h6,
+            .editor h7, .editor h8, .editor h9, .editor h10 {
                 line-height: 1.25;
                 margin: .6em 0 .4em;
                 text-shadow: 0 0 10px rgba(255,180,255,.65), 0 0 26px rgba(255,80,255,.55), 0 0 48px rgba(255,80,255,.45);
@@ -256,12 +245,6 @@
         ::selection {
             background: rgba(56,242,255,.35);
         }
-
-        :root {
-            --neon-a: #00ffff;
-            --neon-b: #7cff00;
-            --neon-c: #ff4dff;
-        }
     </style>
 </head>
 
@@ -316,7 +299,7 @@
                     <div id="editor" class="editor" contenteditable="true" spellcheck="false"></div>
 
                     <div class="status">
-                        Wörter <b id="wc">0</b> | Zeichen <b id="cc">0</b>
+                        Words <b id="wc">0</b> | Characters <b id="cc">0</b>
                     </div>
                 </div>
             </div>
@@ -332,7 +315,8 @@
 
         const KEY = "neon_writer_md_v3";
 
-        /* === WYSIWYG === */
+        // --- WYSIWYG commands ---
+
         function cmd(c, v = null) {
             editor.focus();
             document.execCommand(c, false, v);
@@ -342,7 +326,6 @@
             editor.focus();
             const success = document.execCommand("formatBlock", false, tag);
 
-            /* Fallback for non-standard tags (h7-h10) if the browser rejects them */
             if (!success && tag.match(/^h\d+$/)) {
                 const sel = window.getSelection();
                 if (sel.rangeCount) {
@@ -356,7 +339,6 @@
 
         function insertCodeBlock() {
             editor.focus();
-
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
 
@@ -366,9 +348,7 @@
             while (node && node !== editor) {
                 if (node.nodeType === 1 && node.tagName === "PRE") {
                     const fragment = document.createDocumentFragment();
-                    while (node.firstChild) {
-                        fragment.appendChild(node.firstChild);
-                    }
+                    while (node.firstChild) fragment.appendChild(node.firstChild);
                     node.parentNode.replaceChild(fragment, node);
                     return;
                 }
@@ -376,17 +356,14 @@
             }
 
             const pre = document.createElement("pre");
-
             if (!range.collapsed) {
-                const fragment = range.cloneContents();
-                pre.appendChild(fragment);
+                pre.appendChild(range.cloneContents());
                 range.deleteContents();
                 range.insertNode(pre);
             } else {
                 pre.appendChild(document.createElement("br"));
                 range.insertNode(pre);
             }
-
             placeCursorInside(pre);
         }
 
@@ -399,53 +376,53 @@
             sel.addRange(range);
         }
 
-        /* === COUNTS === */
+        // --- Word / character count ---
+
         function updateCounts() {
             const t = editor.textContent || "";
             wcEl.textContent = t.trim() ? t.trim().split(/\s+/u).length : 0;
             ccEl.textContent = [...t].length;
         }
 
-        /* === AUTOSAVE === */
-        let timer = null;
+        // --- Autosave ---
+
+        let saveTimer = null;
 
         editor.addEventListener("input", () => {
             updateCounts();
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                localStorage.setItem(KEY, editor.innerHTML);
-            }, 300);
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => localStorage.setItem(KEY, editor.innerHTML), 300);
         });
+
         const saved = localStorage.getItem(KEY);
         if (saved) editor.innerHTML = saved;
         updateCounts();
 
-        /* === HTML -> MARKDOWN === */
+        // --- HTML → Markdown ---
+
         function toMarkdown(node) {
             if (node.nodeType === 3) return node.textContent;
             if (node.nodeType !== 1) return "";
 
             const t = node.tagName.toLowerCase();
-            let c = [...node.childNodes].map(toMarkdown).join("");
+            const c = [...node.childNodes].map(toMarkdown).join("");
 
             if (t === "b" || t === "strong") return `**${c}**`;
             if (t === "i" || t === "em") return `*${c}*`;
             if (t === "pre") return `\n\`\`\`\n${node.innerText}\n\`\`\`\n`;
             if (t === "ul") return "\n" + [...node.children].map(li => `- ${li.innerText}`).join("\n") + "\n";
             if (t === "ol") return "\n" + [...node.children].map((li, i) => `${i + 1}. ${li.innerText}`).join("\n") + "\n";
-
-            /* Handle all headings dynamically up to h10 */
             if (t.match(/^h\d+$/)) {
                 const level = parseInt(t.substring(1), 10);
-                return `\n${'#'.repeat(level)} ${c}\n`;
+                return `\n${"#".repeat(level)} ${c}\n`;
             }
-
             if (t === "div" || t === "p") return `\n${c}\n`;
 
             return c;
         }
 
-        /* === EXPORT === */
+        // --- Export ---
+
         function exportMD() {
             const md = [...editor.childNodes].map(toMarkdown).join("").trim() + "\n";
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -458,7 +435,8 @@
             URL.revokeObjectURL(a.href);
         }
 
-        /* === NEON THEMES === */
+        // --- Neon themes ---
+
         const NEON_PALETTES = [
             { name: "Cyan / Lime / Magenta", colors: ["#00ffff", "#7cff00", "#ff4dff"] },
             { name: "Aqua / Yellow / Pink", colors: ["#00e5ff", "#ffd000", "#ff5cff"] },
@@ -479,7 +457,6 @@
         function shuffleNeonPalette() {
             const idx = Math.floor(Math.random() * NEON_PALETTES.length);
             applyPalette(idx);
-
             const sel = document.getElementById("themeSelect");
             if (sel && sel.value === "-1") {
                 sel.options[0].text = "Auto Random (" + NEON_PALETTES[idx].name + ")";
@@ -495,7 +472,6 @@
         function changeTheme() {
             const sel = document.getElementById("themeSelect");
             const val = parseInt(sel.value, 10);
-
             if (val === -1) {
                 startAutoTheme();
             } else {
