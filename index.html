@@ -251,6 +251,8 @@
             pointer-events: none;
             z-index: 100;
             mix-blend-mode: multiply;
+            filter: blur(28px) saturate(1.8);
+            will-change: transform;
         }
     </style>
 </head>
@@ -789,46 +791,40 @@
             const W = plasmaCv.width / DPR;
             const H = plasmaCv.height / DPR;
 
-            // scroll offset so plasma wanders with page
             const scrollY = window.scrollY || document.documentElement.scrollTop;
 
+            // No ctx.filter blur — blur is done via CSS on the element itself (GPU composite, free)
+            // Just draw the low-res offscreen scaled up; CSS blur handles the softness
             plasmaCtx.fillStyle = "#000";
             plasmaCtx.fillRect(0, 0, W, H);
 
-            // draw plasma twice: one slow large pass + one faster offset pass for depth
-            plasmaCtx.save();
-            plasmaCtx.filter = "blur(32px) saturate(1.8)";
-            // tile the offscreen across the full viewport, offset by scroll
             const tileH = H + 200;
             const offsetY = -(scrollY * 0.4) % tileH;
             plasmaCtx.drawImage(offCv, 0, offsetY, W, tileH);
             if (offsetY > -200) plasmaCtx.drawImage(offCv, 0, offsetY - tileH, W, tileH);
-            plasmaCtx.restore();
 
-            plasmaCtx.save();
-            plasmaCtx.filter = "blur(10px) saturate(2.4)";
-            plasmaCtx.globalAlpha = 0.3;
+            // second pass at lower opacity, different scroll speed — no filter needed
+            plasmaCtx.globalAlpha = 0.28;
             const offsetY2 = -(scrollY * 0.25) % tileH;
             plasmaCtx.drawImage(offCv, 0, offsetY2, W, tileH);
-            plasmaCtx.restore();
+            plasmaCtx.globalAlpha = 1.0;
         }
 
-        const PLASMA_FPS = 10;
-        let lastPlasmaFrame = 0;
+        // Plasma runs on its own interval — completely decoupled from rAF
+        // so typing/input never competes with plasma rendering
+        setInterval(() => {
+            plasmaT += 0.06;
+            drawPlasma();
+            renderPlasma();
+        }, 100); // 10fps = 100ms
 
+        // Scroll: only re-render (no redraw of plasma math, just reposition)
+        document.querySelector(".wrap").addEventListener("scroll", renderPlasma, { passive: true });
+
+        // FPS counter only — lightweight rAF
         function fpsLoop(now) {
             requestAnimationFrame(fpsLoop);
-
             const elapsed = now - lastFpsFrame;
-
-            if (now - lastPlasmaFrame >= 1000 / PLASMA_FPS) {
-                plasmaT += 0.06;
-                drawPlasma();
-                renderPlasma();
-                lastPlasmaFrame = now;
-            }
-
-            // FPS counter
             frameCount++;
             fpsAccum += elapsed;
             lastFpsFrame = now;
@@ -838,13 +834,6 @@
                 fpsAccum = 0;
             }
         }
-
-        // re-render plasma on scroll so it wanders
-        document.querySelector(".wrap").addEventListener("scroll", () => {
-            drawPlasma();
-            renderPlasma();
-        });
-
         requestAnimationFrame(fpsLoop);
     </script>
 </body>
