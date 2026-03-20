@@ -7,52 +7,15 @@
 
     <style>
         :root {
-            --fade-time: 40s;
             --ink-base: #b7f7ff;
-            --ui-base: #38f2ff;
             --bg-base: #050608;
             --borderW: 56px;
             --radius: 18px;
             --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
             --mono: ui-monospace, Consolas, monospace;
-            --ink-hue-span: 110deg;
-            --ui-hue-span: 70deg;
-            --rail-hue-span: 140deg;
             --neon-a: #00ffff;
             --neon-b: #7cff00;
             --neon-c: #ff4dff;
-        }
-
-        @property --hInk {
-            syntax: "<angle>";
-            inherits: true;
-            initial-value: 0deg;
-        }
-
-        @property --hUI {
-            syntax: "<angle>";
-            inherits: true;
-            initial-value: 0deg;
-        }
-
-        @property --hBg {
-            syntax: "<angle>";
-            inherits: true;
-            initial-value: 0deg;
-        }
-
-        @keyframes bgDrift {
-            0% {
-                --hBg: 0deg;
-            }
-
-            50% {
-                --hBg: 25deg;
-            }
-
-            100% {
-                --hBg: 0deg;
-            }
         }
 
         html, body {
@@ -61,7 +24,6 @@
             font-family: var(--font);
             background: var(--bg-base);
             overflow: hidden;
-            animation: bgDrift calc(var(--fade-time) * 1.6) ease-in-out infinite;
         }
 
         .frame {
