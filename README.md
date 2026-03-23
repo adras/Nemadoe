@@ -26,9 +26,7 @@ Since Nemadeo is a single-file application, getting started is as easy as it get
 * **Vanilla JavaScript:** Handling the WYSIWYG commands, local storage logic, DOM manipulation, and HTML-to-Markdown parsing.
 
 ## Issues
-* Performance is really poor for larger documents. Be aware of that.
 * Sometimes line breaks are not treated properly. Additional lines may appear or empty lines may disappear.
 
 ## License
-
 This project is open-source and available under the [MIT License](LICENSE).

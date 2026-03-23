@@ -8,7 +8,7 @@ Ask the user to replace `re_xxxxxxxxx` with their real API key.
 ```csharp
 using Resend;
 
-IResend resend = ResendClient.Create( "re_xxxxxxxxx" );
+IResend resendYs = ResendClient.Create( "re_xxxxxxxxx" );
 
 var resp = await resend.EmailSendAsync( new EmailMessage()
 {
