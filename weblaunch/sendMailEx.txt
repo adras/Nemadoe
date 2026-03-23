@@ -1,0 +1,22 @@
+re_LwHYeahitswrongN32_3beRggSGzSKyzBKJ5L2jSLHn
+
+
+I'm using the Resend API. Help me add this code to my project.
+
+Ask the user to replace `re_xxxxxxxxx` with their real API key.
+
+```csharp
+using Resend;
+
+IResend resend = ResendClient.Create( "re_xxxxxxxxx" );
+
+var resp = await resend.EmailSendAsync( new EmailMessage()
+{
+    From = "onboarding@resend.dev",
+    To = "contact@nirin.online",
+    Subject = "Hello World",
+    HtmlBody = "<p>Congrats on sending your <strong>first email</strong>!</p>",
+} );
+
+```
+
