@@ -1,0 +1,300 @@
+
+        :root {
+            --ink-base: var(--raw-ink);
+            --bg-base: #050608;
+            --borderW: 56px;
+            --radius: 18px;
+            --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            --mono: ui-monospace, Consolas, monospace;
+            --neon-a: #00ffff;
+            --neon-b: #7cff00;
+            --neon-c: #ff4dff;
+            --rail-bg: #000000;
+            --topbar-bg: #06080a;
+            --paper-bg: #080f12;
+            --editor-ink: #ffffff;
+            --brand-ink: #d6e2e8;
+            --chrome-ink: #c9d6dd;
+            --ui-border: #58646b;
+            --ui-accent: #78ffff;
+            --hint-ink: #9adfff;
+            --raw-ink: #b7f7ff;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg-base);
+            overflow: hidden;
+        }
+
+        .frame {
+            height: 100%;
+            display: grid;
+            grid-template-columns: var(--borderW) 1fr var(--borderW);
+        }
+
+        .rail {
+            background: var(--rail-bg);
+        }
+
+        /* Theme colors fade independently of the canvas palette. */
+        html, body, .rail, .topbar, .paper, .btn, .brand, .hint,
+        .editor, .editor-raw, .status {
+            transition: background-color 1800ms ease, color 1800ms ease,
+                        border-color 1800ms ease, box-shadow 1800ms ease;
+        }
+
+        .center {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .topbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 14px 18px;
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
+            box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-accent) 25%, transparent), 0 8px 24px rgba(0,0,0,.6);
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .topbar > * { flex-shrink: 0; }
+
+        .brand {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: .6px;
+            color: var(--brand-ink);
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--ui-border);
+            border-radius: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: var(--chrome-ink);
+            font-size: 14px;
+            text-shadow: none;
+        }
+
+            .btn:hover {
+                border-color: var(--ui-accent);
+                color: var(--ui-accent);
+            }
+
+        select.btn option {
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
+        }
+
+        .separator {
+            border-left: 1px solid var(--ui-border);
+            height: 20px;
+            margin: 0 4px;
+        }
+
+        .wrap {
+            flex: 1;
+            overflow: auto;
+            padding: 18px;
+        }
+
+        .paper {
+            border-radius: var(--radius);
+            background: var(--paper-bg);
+            box-shadow: 0 0 34px color-mix(in srgb, var(--ui-accent) 12%, transparent), inset 0 0 26px rgba(0,0,0,.55);
+            position: relative;
+        }
+
+        .hint {
+            padding: 10px 14px;
+            font-size: 12px;
+            opacity: .75;
+            color: var(--hint-ink);
+        }
+
+        /* The original 0% -> 300% loop snapped back on repeat.
+           This definition is currently unused, but now closes seamlessly. */
+        @keyframes neonFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .editor {
+            padding: 20px 22px 40px;
+            outline: none;
+            line-height: 1.75;
+            font-size: 22px;
+            color: var(--editor-ink);
+            caret-color: var(--raw-ink);
+        }
+
+            .editor h1, .editor h2, .editor h3,
+            .editor h4, .editor h5, .editor h6 {
+                line-height: 1.25;
+                margin: .6em 0 .4em;
+            }
+
+            .editor h1 {
+                font-size: 2em;
+            }
+
+            .editor h2 {
+                font-size: 1.5em;
+            }
+
+            .editor h3 {
+                font-size: 1.17em;
+            }
+
+            .editor h4 {
+                font-size: 1em;
+            }
+
+            .editor h5 {
+                font-size: 0.83em;
+            }
+
+            .editor h6 {
+                font-size: 0.67em;
+            }
+
+            .editor pre {
+                background: rgba(0,0,0,.4);
+                padding: 12px;
+                border-radius: 10px;
+                color: var(--ink-base);
+            }
+
+            .editor code {
+                font-family: var(--mono);
+            }
+
+        .status {
+            padding: 12px 16px;
+            font-size: 11px;
+            letter-spacing: .3px;
+            color: var(--chrome-ink);
+            border-top: 1px solid color-mix(in srgb, var(--ui-accent) 18%, transparent);
+        }
+
+        .filename-input {
+            width: 130px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-family: var(--mono);
+        }
+
+            .filename-input::placeholder {
+                color: var(--chrome-ink);
+            opacity: .55;
+            }
+
+        .editor-raw {
+            padding: 20px 22px 40px;
+            outline: none;
+            line-height: 1.6;
+            font-size: 15px;
+            font-family: var(--mono);
+            background: transparent;
+            color: var(--raw-ink);
+            caret-color: var(--raw-ink);
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            resize: none;
+            min-height: 300px;
+        }
+
+        ::selection {
+            background: color-mix(in srgb, var(--ui-accent) 35%, transparent);
+        }
+
+        .storage-warning { color: #ff9b9b; }
+        .storage-ok { color: var(--chrome-ink); }
+
+        @media (max-width: 700px) {
+            :root { --borderW: 8px; }
+            .topbar { gap: 5px; padding: 8px; }
+            .topbar .btn { padding: 6px 8px; font-size: 12px; }
+            .topbar .brand { width: 100%; }
+            .topbar .separator { display: none; }
+            .wrap { padding: 8px; }
+            .editor, .editor-raw { padding: 14px; }
+            .filename-input { width: 100px; }
+        }
+
+        /* Plasma canvas overlay - fixed fullscreen */
+        #plasma-cv {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: multiply;
+            filter: blur(28px) saturate(1.8);
+            will-change: transform;
+        }
+    
+/* NEMADEO 2 editor layer; plasma and original text styling are unchanged. */
+[hidden] { display: none !important; }
+#editor { min-height: 45vh; white-space: pre-wrap; overflow-wrap: anywhere; }
+#editor:focus { outline:none; }
+.md-leaf { white-space:pre-wrap; }
+.nem-blank { min-height:1.75em; }
+.nem-line { min-height:1.75em; }
+.nem-list-line {position:relative;min-height:1.75em;}
+.nem-list-marker {position:absolute;left:0;color:var(--ui-accent);opacity:.8;user-select:none;}
+.nem-quote-line {border-left:3px solid var(--ui-accent);margin:0;padding-left:12px;opacity:.9;}
+.nem-code {white-space:pre-wrap;tab-size:4;overflow-x:auto;font-size:.72em;line-height:1.55;}
+.nem-math {color:var(--editor-ink);cursor:pointer;border-radius:7px;transition:box-shadow .18s ease,color .18s ease;}
+.nem-math:hover,.nem-math:focus {outline:none;box-shadow:0 0 0 1px var(--ui-accent);}
+.nem-math-inline {display:inline-block;vertical-align:middle;max-width:100%;}
+.nem-math-block {display:block;text-align:center;max-width:100%;padding:10px 8px;margin:7px 0;overflow-x:auto;}
+.nem-math mjx-container {margin:0!important;max-width:100%;}
+.nem-math svg {max-width:100%;height:auto;vertical-align:middle;}
+.nem-math-error {color:#ff8e9d;white-space:pre-wrap;font-family:var(--mono);font-size:.72em;}
+#editor a {color:var(--ui-accent);text-decoration:underline;}
+#editor code:not(.nem-code code) {color:var(--raw-ink);background:rgba(120,120,120,.12);border-radius:4px;padding:0 3px;}
+#editor hr {border:0;border-top:1px solid var(--ui-border);}
+.editor-raw {display:block;min-height:45vh;height:calc(100vh - 230px);}
+.math-panel {position:fixed;z-index:105;inset:auto 26px 28px auto;width:min(620px,calc(100vw - 52px));padding:16px;background:var(--paper-bg);border:1px solid var(--ui-accent);border-radius:14px;color:var(--editor-ink);box-shadow:0 12px 48px rgba(0,0,0,.85);}
+.math-panel textarea {width:100%;box-sizing:border-box;background:var(--topbar-bg);color:var(--raw-ink);font:15px/1.5 var(--mono);border:1px solid var(--ui-border);border-radius:6px;min-height:65px;padding:9px;resize:vertical;}
+.math-preview {padding:14px;min-height:44px;text-align:center;overflow:auto;font-size:23px;}
+.math-bar {display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:9px;}
+.math-bar .btn {padding:5px 11px;}
+#mathError {color:#ffa0aa;font:12px var(--mono);}
+.tiny-note {font-size:11px;color:var(--hint-ink);opacity:.9;}
+.mode-label {font-size:12px;color:var(--hint-ink);margin-left:8px;}
+@media(max-width:700px) {.math-panel{inset:auto 8px 8px 8px;width:auto;padding:10px;}#editor{font-size:19px;}}
+/* MathJax accessibility MathML must remain available to assistive technologies,
+   but must not appear as a duplicate, visible formula when using SVG output. */
+mjx-assistive-mml {position:absolute!important;top:0;left:0;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;opacity:0;pointer-events:none;}
+.nem-table {border-collapse:collapse;max-width:100%;font-size:.76em;line-height:1.4;margin:9px 0;}
+.nem-table th,.nem-table td {border:1px solid var(--ui-border);padding:5px 10px;text-align:left;}
+.nem-table th {background:color-mix(in srgb,var(--ui-accent) 11%,transparent);}
+
+/* A view-only caret line, not an extra Markdown paragraph. Non-editable math
+   at EOF otherwise traps keyboard users without a place to type next. */
+.nem-document-tail { min-height:1.75em; cursor:text; }
+.nem-empty-leaf { display:inline; white-space:pre; }
+
+/* Empty math is a visible, focusable rendering of unchanged source. */
+.nem-math-empty { border: 1px dashed var(--ui-border); background: rgba(120,120,120,.07); }
+.nem-math-empty.nem-math-block { min-height: 2.2em; padding: 12px; }
+.nem-math-empty.nem-math-inline { padding: 0 7px; }
+.nem-math-empty:not(:hover) { opacity: .8; }
+.math-bar .btn-danger { border-color: #ed6675; color: #ff9baa; }
+.math-bar .btn-danger:hover { background: rgba(255,70,90,.12); }

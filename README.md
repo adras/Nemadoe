@@ -1,33 +1,37 @@
-# Nemadeo (Neon Markdown Editor)
+# NEMADEO 2
 
-Nemadeo is a lightweight, zero-dependency web-based text editor that combines a distraction-free writing experience with a dynamic, glowing neon aesthetic. Write your texts in a beautiful WYSIWYG environment and export them seamlessly to clean Markdown.
+**A source-first neon Markdown + math editor.**
 
-## Features
+This is a **working NEMADEO 2 development build**, not a claim that the full editor is production-complete. The visual shell is inherited from NEMADEO 1; the editing model is replaced by a source-indexed document and regional transactions. Locally bundled MathJax draws mathematical formulas as SVG, including the equations from the supplied Mapper research document.
 
-* **Dynamic Neon UI:** Smooth, animated CSS gradients and glowing text effects that gently cycle through carefully selected neon color palettes.
-* **WYSIWYG Editing:** Format your text directly in the browser (Bold, Italic, Headings, Lists, and Code Blocks) without writing Markdown syntax manually.
-* **Instant Markdown Export:** One click converts your rich text into clean `.md` syntax and triggers a file download.
-* **Auto-Save:** Never lose your progress. Nemadeo automatically saves your drafts locally in your browser.
-* **Live Metrics:** Real-time word and character counts right at the bottom of your page.
-* **Zero Dependencies:** Built purely with HTML, CSS, and Vanilla JavaScript. No build tools or package managers required.
+## Run
 
-## How to Use
+Unzip the project, preserving the folder structure, and open **`index.html`** in a current browser. There is no build step, npm install, network dependency, or server dependency for the **editor**. (Hosting with a simple static server is also fine.)
 
-Since Nemadeo is a single-file application, getting started is as easy as it gets:
+The separate `weblaunch/` waitlist backend is carried over from v1 without new changes; it is not needed for the editor.
 
-1. Clone or download this repository.
-2. Open the `index.html` file in any modern web browser.
-3. Start typing!
+## Use
 
-## Technologies Used
+- Click **Import .md** and select a Markdown research document, e.g. `examples/Mapper_Grundlagen_und_Verwendung.md`.
+- In **Formatted** mode edit normal text directly. Use the B/I/Hx/etc. and math toolbars. The changed source region is the only persisted edit.
+- **Click a rendered equation** to change its LaTeX (with immediate SVG preview and mathematical templates), then Done.
+- Click **Raw** to edit Markdown and LaTeX together as ordinary source text.
+- **Export .md** downloads the exact canonical source. Your browser's autosave is only a recovery copy and does not overwrite the imported file.
+- `Ctrl+S` exports. `Ctrl+B` / `Ctrl+I` apply formatting. `Ctrl+Z` / `Ctrl+Y` undo/redo.
 
-* **HTML5:** For the structure and `contenteditable` editor capabilities.
-* **CSS3:** Utilizing CSS variables, `@property` for smooth gradient animations, and advanced `text-shadow` / `filter` techniques for the neon glow.
-* **Vanilla JavaScript:** Handling the WYSIWYG commands, local storage logic, DOM manipulation, and HTML-to-Markdown parsing.
+## Architecture, contract and tests
 
-## Issues
-* Sometimes line breaks are not treated properly. Additional lines may appear or empty lines may disappear.
+- [ARCHITECTURE.md](ARCHITECTURE.md): single-source principle, CST region graph, source operations, rendering.
+- [SPECIFICATION.md](SPECIFICATION.md): currently supported Markdown and mathematical LaTeX; explicitly known limits.
+- [TESTS.md](TESTS.md): two real browser regression suites and measured performance observations.
+- `src/model.js`, `src/parser.js`, `src/render.js`, `src/app.js` are individually replaceable components.
+- `src/visuals.js` and the original portion of `src/appearance.css` preserve the 12-theme neon plasma appearance.
+- `legacy/v1-index.html`: original comparator for visual and latency regression testing.
 
-## License
-This project is open-source and available under the [MIT License](LICENSE).
+## Licensing
 
+Project code is MIT as in `LICENSE`. The included MathJax library has its own copyright/license in `vendor/LICENSE.MathJax.txt`.
+
+## Current release gate
+
+This revision passes the included automated tests, but **is not yet guaranteed to meet the strict no-performance-regression and no-visual-regression constraints** on every machine/browser. Also, 2D glyph-level mathematical hit testing is not yet supported: click a formula to edit its LaTeX region in a compact source/preview panel. These are explicitly tracked in `SPECIFICATION.md`.

@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NEMADEO - Neon Markdown editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        :root {
+            --ink-base: var(--raw-ink);
+            --bg-base: #050608;
+            --borderW: 56px;
+            --radius: 18px;
+            --font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            --mono: ui-monospace, Consolas, monospace;
+            --neon-a: #00ffff;
+            --neon-b: #7cff00;
+            --neon-c: #ff4dff;
+            --rail-bg: #000000;
+            --topbar-bg: #06080a;
+            --paper-bg: #080f12;
+            --editor-ink: #ffffff;
+            --brand-ink: #d6e2e8;
+            --chrome-ink: #c9d6dd;
+            --ui-border: #58646b;
+            --ui-accent: #78ffff;
+            --hint-ink: #9adfff;
+            --raw-ink: #b7f7ff;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg-base);
+            overflow: hidden;
+        }
+
+        .frame {
+            height: 100%;
+            display: grid;
+            grid-template-columns: var(--borderW) 1fr var(--borderW);
+        }
+
+        .rail {
+            background: var(--rail-bg);
+        }
+
+        /* Theme colors fade independently of the canvas palette. */
+        html, body, .rail, .topbar, .paper, .btn, .brand, .hint,
+        .editor, .editor-raw, .status {
+            transition: background-color 1800ms ease, color 1800ms ease,
+                        border-color 1800ms ease, box-shadow 1800ms ease;
+        }
+
+        .center {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .topbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 14px 18px;
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
+            box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-accent) 25%, transparent), 0 8px 24px rgba(0,0,0,.6);
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .topbar > * { flex-shrink: 0; }
+
+        .brand {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: .6px;
+            color: var(--brand-ink);
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--ui-border);
+            border-radius: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: var(--chrome-ink);
+            font-size: 14px;
+            text-shadow: none;
+        }
+
+            .btn:hover {
+                border-color: var(--ui-accent);
+                color: var(--ui-accent);
+            }
+
+        select.btn option {
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
+        }
+
+        .separator {
+            border-left: 1px solid var(--ui-border);
+            height: 20px;
+            margin: 0 4px;
+        }
+
+        .wrap {
+            flex: 1;
+            overflow: auto;
+            padding: 18px;
+        }
+
+        .paper {
+            border-radius: var(--radius);
+            background: var(--paper-bg);
+            box-shadow: 0 0 34px color-mix(in srgb, var(--ui-accent) 12%, transparent), inset 0 0 26px rgba(0,0,0,.55);
+            position: relative;
+        }
+
+        .hint {
+            padding: 10px 14px;
+            font-size: 12px;
+            opacity: .75;
+            color: var(--hint-ink);
+        }
+
+        /* The original 0% -> 300% loop snapped back on repeat.
+           This definition is currently unused, but now closes seamlessly. */
+        @keyframes neonFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .editor {
+            padding: 20px 22px 40px;
+            outline: none;
+            line-height: 1.75;
+            font-size: 22px;
+            color: var(--editor-ink);
+            caret-color: var(--raw-ink);
+        }
+
+            .editor h1, .editor h2, .editor h3,
+            .editor h4, .editor h5, .editor h6 {
+                line-height: 1.25;
+                margin: .6em 0 .4em;
+            }
+
+            .editor h1 {
+                font-size: 2em;
+            }
+
+            .editor h2 {
+                font-size: 1.5em;
+            }
+
+            .editor h3 {
+                font-size: 1.17em;
+            }
+
+            .editor h4 {
+                font-size: 1em;
+            }
+
+            .editor h5 {
+                font-size: 0.83em;
+            }
+
+            .editor h6 {
+                font-size: 0.67em;
+            }
+
+            .editor pre {
+                background: rgba(0,0,0,.4);
+                padding: 12px;
+                border-radius: 10px;
+                color: var(--ink-base);
+            }
+
+            .editor code {
+                font-family: var(--mono);
+            }
+
+        .status {
+            padding: 12px 16px;
+            font-size: 11px;
+            letter-spacing: .3px;
+            color: var(--chrome-ink);
+            border-top: 1px solid color-mix(in srgb, var(--ui-accent) 18%, transparent);
+        }
+
+        .filename-input {
+            width: 130px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-family: var(--mono);
+        }
+
+            .filename-input::placeholder {
+                color: var(--chrome-ink);
+            opacity: .55;
+            }
+
+        .editor-raw {
+            padding: 20px 22px 40px;
+            outline: none;
+            line-height: 1.6;
+            font-size: 15px;
+            font-family: var(--mono);
+            background: transparent;
+            color: var(--raw-ink);
+            caret-color: var(--raw-ink);
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            resize: none;
+            min-height: 300px;
+        }
+
+        ::selection {
+            background: color-mix(in srgb, var(--ui-accent) 35%, transparent);
+        }
+
+        .storage-warning { color: #ff9b9b; }
+        .storage-ok { color: var(--chrome-ink); }
+
+        @media (max-width: 700px) {
+            :root { --borderW: 8px; }
+            .topbar { gap: 5px; padding: 8px; }
+            .topbar .btn { padding: 6px 8px; font-size: 12px; }
+            .topbar .brand { width: 100%; }
+            .topbar .separator { display: none; }
+            .wrap { padding: 8px; }
+            .editor, .editor-raw { padding: 14px; }
+            .filename-input { width: 100px; }
+        }
+
+        /* Plasma canvas overlay - fixed fullscreen */
+        #plasma-cv {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: multiply;
+            filter: blur(28px) saturate(1.8);
+            will-change: transform;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="plasma-cv"></canvas>
+    <div class="frame">
+        <div class="rail"></div>
+
+        <div class="center">
+            <div class="topbar">
+                <b class="brand">NEMADEO v1.25</b>
+                <button class="btn" data-rich-tool onclick="cmd('bold')"><b>B</b></button>
+                <button class="btn" data-rich-tool onclick="cmd('italic')"><i>I</i></button>
+
+                <span class="separator"></span>
+                <button class="btn" data-rich-tool onclick="setHeading('p')">Normal</button>
+                <span class="separator"></span>
+
+                <button class="btn" data-rich-tool onclick="setHeading('h1')">H1</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h2')">H2</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h3')">H3</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h4')">H4</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h5')">H5</button>
+
+                <select class="btn" data-rich-tool onchange="if(this.value){ setHeading(this.value); this.value=''; }">
+                    <option value="">Hx...</option>
+                    <option value="h6">H6</option>
+                </select>
+
+                <button class="btn" data-rich-tool onclick="cmd('insertUnorderedList')">&bull;</button>
+                <button class="btn" data-rich-tool onclick="cmd('insertOrderedList')">1.</button>
+                <button class="btn" data-rich-tool onclick="insertCodeBlock()">code</button>
+
+                <input id="importInput" type="file" accept=".md,text/markdown,text/plain" style="display:none" onchange="importMD(this)" />
+                <button class="btn" onclick="document.getElementById('importInput').click()">Import .md</button>
+                <input id="filenameInput" class="btn filename-input" type="text" placeholder="filename" spellcheck="false" />
+                <button id="toggleViewBtn" class="btn" onclick="toggleRawView()">Raw</button>
+                <button class="btn" onclick="exportMD()">Export .md</button>
+
+                <select class="btn" id="themeSelect" style="margin-left: auto;" aria-label="Color theme" onchange="changeTheme()">
+                    <option value="-1">Auto Random</option>
+                    <option value="0">Cyan / Lime / Magenta</option>
+                    <option value="1">Aqua / Yellow / Pink</option>
+                    <option value="2">Mint / Green / Violet</option>
+                    <option value="3">Lava</option>
+                    <option value="4">Prismatic</option>
+                    <option value="5">Synthwave</option>
+                    <option value="6">Deep Ocean</option>
+                    <option value="7">Ember / Copper</option>
+                    <option value="8">Emerald Night</option>
+                    <option value="9">Amethyst</option>
+                    <option value="10">Glacier</option>
+                    <option value="11">Crimson Sunset</option>
+                </select>
+            </div>
+
+            <div class="wrap">
+                <div class="paper">
+                    <div class="hint"></div>
+                    <div id="editor" class="editor" contenteditable="true" spellcheck="false"></div>
+
+                    <div class="status">
+                        Words <b id="wc">0</b> | Characters <b id="cc">0</b>
+                        <span id="saveStatus" class="storage-ok" role="status" aria-live="polite"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rail"></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById("editor");
+        const wcEl = document.getElementById("wc");
+        const ccEl = document.getElementById("cc");
+
+        // The existing v3 key contains HTML. Keep it untouched for migration/recovery.
+        const LEGACY_KEY = "neon_writer_md_v3";
+        const KEY = "neon_writer_markdown_v4";
+        const FILENAME_KEY = "neon_writer_filename";
+        const THEME_KEY = "neon_writer_theme";
+
+        function storageGet(key) {
+            try { return localStorage.getItem(key); }
+            catch (e) { showSaveError(); return null; }
+        }
+
+        function storageSet(key, value) {
+            try { localStorage.setItem(key, value); return true; }
+            catch (e) { showSaveError(); return false; }
+        }
+
+        function showSaveError() {
+            const indicator = document.getElementById("saveStatus");
+            if (indicator) {
+                indicator.textContent = " | Save failed: storage unavailable. Export your text!";
+                indicator.className = "storage-warning";
+            }
+        }
+
+        function showSaved() {
+            const indicator = document.getElementById("saveStatus");
+            if (indicator) {
+                indicator.textContent = " | Saved locally";
+                indicator.className = "storage-ok";
+            }
+        }
+
+        // --- Filename input ---
+
+        const filenameInput = document.getElementById("filenameInput");
+
+        const savedFilename = storageGet(FILENAME_KEY);
+        if (savedFilename) filenameInput.value = savedFilename;
+
+        filenameInput.addEventListener("input", () => {
+            storageSet(FILENAME_KEY, filenameInput.value);
+        });
+
+        // --- WYSIWYG commands ---
+
+        function cmd(c, v = null) {
+            if (isRawView) return;
+            editor.focus();
+            if (document.execCommand(c, false, v)) markEditorEdited();
+        }
+
+        function setHeading(tag) {
+            if (isRawView) return;
+            editor.focus();
+            const success = document.execCommand("formatBlock", false, tag);
+
+            if (!success && tag.match(/^h\d+$/)) {
+                const sel = window.getSelection();
+                if (sel.rangeCount) {
+                    const range = sel.getRangeAt(0);
+                    const el = document.createElement(tag);
+                    el.appendChild(range.extractContents());
+                    range.insertNode(el);
+                }
+            }
+            markEditorEdited();
+        }
+
+        function insertCodeBlock() {
+            if (isRawView) return;
+            editor.focus();
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+
+            const range = sel.getRangeAt(0);
+
+            let node = sel.anchorNode;
+            while (node && node !== editor) {
+                if (node.nodeType === 1 && node.tagName === "PRE") {
+                    const fragment = document.createDocumentFragment();
+                    while (node.firstChild) fragment.appendChild(node.firstChild);
+                    node.parentNode.replaceChild(fragment, node);
+                    markEditorEdited();
+                    return;
+                }
+                node = node.parentNode;
+            }
+
+            const pre = document.createElement("pre");
+            if (!range.collapsed) {
+                pre.appendChild(range.cloneContents());
+                range.deleteContents();
+                range.insertNode(pre);
+            } else {
+                pre.appendChild(document.createElement("br"));
+                range.insertNode(pre);
+            }
+            placeCursorInside(pre);
+            markEditorEdited();
+        }
+
+        function placeCursorInside(el) {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(el);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
+        // --- Document state and counting ---
+        // Canonical source is always Markdown; WYSIWYG is a projection of it.
+        let currentMarkdown = "";
+        let formattedDirty = false;
+        let isRawView = false;
+        let saveTimer = null;
+
+        function getCurrentMarkdown() {
+            const raw = document.getElementById("rawEditor");
+            if (raw) return raw.value;
+            return formattedDirty ? editorToMarkdown() : currentMarkdown;
+        }
+
+        function updateCounts() {
+            const raw = document.getElementById("rawEditor");
+            const t = raw ? raw.value : (editor.innerText || editor.textContent || "");
+            wcEl.textContent = t.trim() ? t.trim().split(/\s+/u).length : 0;
+            ccEl.textContent = [...t].length;
+        }
+
+        function flushSave() {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            currentMarkdown = getCurrentMarkdown();
+            formattedDirty = false;
+            if (storageSet(KEY, currentMarkdown)) showSaved();
+        }
+
+        function queueSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(flushSave, 300);
+        }
+
+        function markEditorEdited() {
+            formattedDirty = true;
+            updateCounts();
+            queueSave();
+        }
+        editor.addEventListener("input", markEditorEdited);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden" && saveTimer !== null) flushSave();
+        });
+        window.addEventListener("pagehide", () => {
+            if (saveTimer !== null) flushSave();
+        });
+
+        // --- Markdown serialization ---
+
+        function codeFence(content, preferred = "```") {
+            const marker = preferred[0] === "~" ? "~" : "`";
+            let length = Math.max(3, preferred.length);
+            for (const match of content.matchAll(marker === "`" ? /`+/g : /~+/g)) {
+                length = Math.max(length, match[0].length + 1);
+            }
+            return marker.repeat(length);
+        }
+
+        function textInside(node) {
+            if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+            if (node.nodeType !== Node.ELEMENT_NODE) return "";
+            if (node.tagName === "BR") return "\n";
+            let text = [...node.childNodes].map(textInside).join("");
+            if (node.tagName === "DIV" || node.tagName === "P") text += "\n";
+            return text;
+        }
+
+        function toMarkdown(node) {
+            if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+            if (node.nodeType !== Node.ELEMENT_NODE) return "";
+            const t = node.tagName.toLowerCase();
+            if (t === "br") return "  \n";
+            if (t === "pre") {
+                let code = textInside(node);
+                const fence = codeFence(code, node.dataset.fence || "```");
+                const lang = node.dataset.lang || "";
+                return `${fence}${lang}\n${code}\n${fence}`;
+            }
+            const c = [...node.childNodes].map(toMarkdown).join("");
+            if (t === "b" || t === "strong") return `**${c}**`;
+            if (t === "i" || t === "em") return `*${c}*`;
+            if (t === "s" || t === "del" || t === "strike") return `~~${c}~~`;
+            if (t === "code") {
+                const ticks = codeFence(c).slice(0, Math.max(1, ...(c.match(/`+/g) || []).map(v => v.length + 1)));
+                return `${ticks}${c}${ticks}`;
+            }
+            if (t === "a") {
+                const href = node.getAttribute("href") || "";
+                if (/^(https?:\/\/|mailto:|#|\/)/i.test(href)) return `[${c}](${href})`;
+                return c;
+            }
+            if (/^h[1-6]$/.test(t)) return `${"#".repeat(Number(t[1]))} ${c}`;
+            if (t === "li") return c.replace(/\n$/, "");
+            if (t === "ul") return [...node.children].filter(n => n.tagName === "LI")
+                .map(li => `- ${toMarkdown(li)}`).join("\n");
+            if (t === "ol") {
+                const start = Number(node.getAttribute("start")) || 1;
+                return [...node.children].filter(n => n.tagName === "LI")
+                    .map((li, i) => `${start + i}. ${toMarkdown(li)}`).join("\n");
+            }
+            if (t === "blockquote") return c.split("\n").map(line => `> ${line}`).join("\n");
+            if (node.dataset.mdBlank === "1") return "";
+            if (t === "div" || t === "p") {
+                return c + (node.dataset.mdHardbreak === "1" ? "  " : "");
+            }
+            return c;
+        }
+
+        function editorToMarkdown() {
+            const parts = [];
+            for (const node of editor.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE && !node.textContent) continue;
+                parts.push(toMarkdown(node));
+            }
+            return parts.join("\n");
+        }
+
+        // --- Markdown import (all markup is HTML-escaped before rendering) ---
+
+        function escapeHTML(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function inlineMarkdown(text) {
+            const tokens = [];
+            function hold(html) { tokens.push(html); return `\x01${tokens.length - 1}\x02`; }
+            let result = escapeHTML(text);
+            result = result.replace(/(`+)([\s\S]*?)\1/g, (_m, _ticks, code) => hold(`<code>${code}</code>`));
+            result = result.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)"']+|mailto:[^\s)"']+|#[^\s)"']+|\/[^\s)"']+)\)/gi,
+                (_m, label, url) => hold(`<a href="${escapeHTML(url)}">${label}</a>`));
+            result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/__(.+?)__/g, "<strong>$1</strong>")
+                .replace(/~~(.+?)~~/g, "<del>$1</del>")
+                .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>")
+                .replace(/(?<!_)_([^_\n]+)_(?!_)/g, "<em>$1</em>");
+            return result.replace(/\x01(\d+)\x02/g, (_m, n) => tokens[Number(n)]);
+        }
+
+        function markdownToHTML(source) {
+            const md = String(source).replace(/\r\n?/g, "\n");
+            if (!md.length) return "";
+            const lines = md.split("\n");
+            const output = [];
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const fence = line.match(/^ {0,3}(`{3,}|~{3,})([^\r\n]*)$/);
+                if (fence) {
+                    const marker = fence[1][0];
+                    const startFence = fence[1];
+                    const lang = fence[2];
+                    const codeLines = [];
+                    let closed = false;
+                    while (++i < lines.length) {
+                        const candidate = lines[i].trim();
+                        if (candidate.length >= startFence.length &&
+                            [...candidate].every(ch => ch === marker)) {
+                            closed = true;
+                            break;
+                        }
+                        codeLines.push(lines[i]);
+                    }
+                    // An unclosed fence stays visible instead of discarding its content.
+                    output.push(`<pre data-fence="${startFence}" data-lang="${escapeHTML(lang)}" data-md-unclosed="${closed ? "0" : "1"}"><code>${escapeHTML(codeLines.join("\n"))}</code></pre>`);
+                    continue;
+                }
+                const heading = line.match(/^ {0,3}(#{1,6})[ \t]+(.+)$/);
+                if (heading) {
+                    const level = heading[1].length;
+                    output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+                    continue;
+                }
+                const list = line.match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
+                if (list) {
+                    const ordered = /^\d/.test(list[1]);
+                    const entries = [inlineMarkdown(list[2])];
+                    let j = i + 1;
+                    while (j < lines.length) {
+                        const next = lines[j].match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
+                        if (!next || /^\d/.test(next[1]) !== ordered) break;
+                        entries.push(inlineMarkdown(next[2]));
+                        j++;
+                    }
+                    const tag = ordered ? "ol" : "ul";
+                    const initial = ordered ? ` start="${parseInt(list[1], 10)}"` : "";
+                    output.push(`<${tag}${initial}>${entries.map(e => `<li>${e}</li>`).join("")}</${tag}>`);
+                    i = j - 1;
+                    continue;
+                }
+                if (line.startsWith("> ")) {
+                    const quoted = [line.slice(2)];
+                    let j = i + 1;
+                    while (j < lines.length && lines[j].startsWith("> ")) quoted.push(lines[j++].slice(2));
+                    output.push(`<blockquote>${quoted.map(inlineMarkdown).join("<br>")}</blockquote>`);
+                    i = j - 1;
+                    continue;
+                }
+                if (!line.length) {
+                    output.push('<div data-md-blank="1"><br></div>');
+                } else {
+                    const hardbreak = line.endsWith("  ");
+                    const text = hardbreak ? line.slice(0, -2) : line;
+                    output.push(`<div${hardbreak ? ' data-md-hardbreak="1"' : ""}>${inlineMarkdown(text)}</div>`);
+                }
+            }
+            return output.join("");
+        }
+
+        function setDocument(md) {
+            clearTimeout(saveTimer);
+            const text = String(md).replace(/\r\n?/g, "\n");
+            currentMarkdown = text;
+            formattedDirty = false;
+            editor.innerHTML = markdownToHTML(text);
+            const raw = document.getElementById("rawEditor");
+            if (raw) raw.value = text;
+            updateCounts();
+            flushSave();
+        }
+
+        function importMD(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                filenameInput.value = file.name.replace(/\.md$/i, "");
+                storageSet(FILENAME_KEY, filenameInput.value);
+                setDocument(reader.result);
+            };
+            reader.onerror = () => {
+                const indicator = document.getElementById("saveStatus");
+                indicator.textContent = " | File could not be read";
+                indicator.className = "storage-warning";
+            };
+            reader.readAsText(file);
+            input.value = "";
+        }
+
+        // --- Raw / formatted toggle ---
+
+        function setRichToolbarEnabled(enabled) {
+            for (const item of document.querySelectorAll("[data-rich-tool]")) {
+                item.disabled = !enabled;
+            }
+        }
+
+        function toggleRawView() {
+            const btn = document.getElementById("toggleViewBtn");
+            if (!isRawView) {
+                const md = getCurrentMarkdown();
+                const textarea = document.createElement("textarea");
+                textarea.id = "rawEditor";
+                textarea.className = "editor-raw";
+                textarea.value = md;
+                textarea.style.height = Math.max(300, editor.offsetHeight) + "px";
+                textarea.addEventListener("input", () => {
+                    updateCounts();
+                    queueSave();
+                });
+                editor.style.display = "none";
+                editor.parentNode.insertBefore(textarea, editor);
+                currentMarkdown = md;
+                formattedDirty = false;
+                btn.textContent = "Formatted";
+                isRawView = true;
+                setRichToolbarEnabled(false);
+                updateCounts();
+            } else {
+                const textarea = document.getElementById("rawEditor");
+                const md = textarea.value;
+                currentMarkdown = md;
+                formattedDirty = false;
+                editor.innerHTML = markdownToHTML(md);
+                textarea.remove();
+                editor.style.display = "";
+                btn.textContent = "Raw";
+                isRawView = false;
+                setRichToolbarEnabled(true);
+                updateCounts();
+                flushSave();
+            }
+        }
+
+        // --- Export ---
+
+        function exportMD() {
+            const md = getCurrentMarkdown();
+            flushSave();
+            const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+            const rawName = filenameInput.value.trim() || "neon";
+            const filename = rawName.toLowerCase().endsWith(".md") ? rawName : rawName + ".md";
+            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // Restore v4 Markdown verbatim. Migrate existing v3 HTML without
+        // changing/deleting the previous storage value.
+        const saved = storageGet(KEY);
+        if (saved !== null) {
+            currentMarkdown = saved;
+        } else {
+            const legacyHTML = storageGet(LEGACY_KEY);
+            if (legacyHTML) {
+                const template = document.createElement("template");
+                template.innerHTML = legacyHTML;
+                const oldEditor = editor;
+                // Serialize inert DOM nodes, never execute imported HTML.
+                currentMarkdown = [...template.content.childNodes].map(toMarkdown).join("\n");
+                storageSet(KEY, currentMarkdown);
+            }
+        }
+        editor.innerHTML = markdownToHTML(currentMarkdown);
+        updateCounts();
+
+        // --- Color themes: the original five plus seven new palettes ---
+
+        // A theme supplies both three plasma colors and accessible UI colors.
+        // Theme changes interpolate rather than snapping to new RGB values.
+        const THEME_SKINS = {
+            cyber: { bg: "#050608", rail: "#000000", bar: "#06080a", paper: "#080f12", ink: "#ffffff", brand: "#d6e2e8", chrome: "#c9d6dd", border: "#58646b", accent: "#78ffff", hint: "#9adfff", raw: "#b7f7ff" },
+            aqua: { bg: "#030b12", rail: "#010408", bar: "#051621", paper: "#06131d", ink: "#f7ffff", brand: "#d1f9ff", chrome: "#bbe6ec", border: "#406674", accent: "#36eeff", hint: "#7adfff", raw: "#c0f6ff" },
+            mint: { bg: "#040e0c", rail: "#010706", bar: "#071814", paper: "#091b17", ink: "#f3fff8", brand: "#d2ffe1", chrome: "#b3e3ce", border: "#436c60", accent: "#56f5ab", hint: "#82dfbc", raw: "#b9ffe0" },
+            lava: { bg: "#100604", rail: "#060100", bar: "#1b0b08", paper: "#190b0a", ink: "#fff4ec", brand: "#ffe0cb", chrome: "#f2c8b4", border: "#8a5245", accent: "#ff9c56", hint: "#ffd08d", raw: "#ffe2b8" },
+            prism: { bg: "#0c0710", rail: "#050207", bar: "#170d1c", paper: "#150e1c", ink: "#fff5ff", brand: "#fae1ff", chrome: "#d8c3e5", border: "#69557b", accent: "#ee80f5", hint: "#e5a6fa", raw: "#f4dbff" },
+            wave: { bg: "#10051f", rail: "#05000e", bar: "#200e33", paper: "#1c0c2f", ink: "#fff4ff", brand: "#fbd4ff", chrome: "#d9c5f3", border: "#76528d", accent: "#ff75de", hint: "#f4a3fa", raw: "#f5daff" },
+            ocean: { bg: "#020c19", rail: "#00040a", bar: "#071728", paper: "#091c2c", ink: "#eefcff", brand: "#cff7ff", chrome: "#b4d6ed", border: "#3d6580", accent: "#3fe3e8", hint: "#7bdbf4", raw: "#cef6ff" },
+            copper: { bg: "#130c07", rail: "#050301", bar: "#221508", paper: "#1e160f", ink: "#fff9eb", brand: "#ffe5bb", chrome: "#e8ccaa", border: "#846345", accent: "#ffc36b", hint: "#f1d18f", raw: "#ffecce" },
+            emerald: { bg: "#03100b", rail: "#000604", bar: "#082017", paper: "#0a1b14", ink: "#f1fff5", brand: "#ceffe2", chrome: "#b0e6cc", border: "#356d54", accent: "#53f5a1", hint: "#8ce9b6", raw: "#bfffda" },
+            amethyst: { bg: "#0d081b", rail: "#04020b", bar: "#1b1030", paper: "#160e27", ink: "#faf2ff", brand: "#e7d6ff", chrome: "#d6c5ef", border: "#655481", accent: "#bd97ff", hint: "#d7bcff", raw: "#eadcff" },
+            ice: { bg: "#07131c", rail: "#02070d", bar: "#0c2636", paper: "#102431", ink: "#f5fdff", brand: "#e0faff", chrome: "#c1e5f0", border: "#56798c", accent: "#adf9ff", hint: "#a9ebff", raw: "#e1faff" },
+            crimson: { bg: "#16090e", rail: "#070205", bar: "#270f17", paper: "#210e15", ink: "#fff5f5", brand: "#ffe1e7", chrome: "#ecc8cb", border: "#87525d", accent: "#ff8698", hint: "#ffb0a1", raw: "#ffe3df" }
+        };
+
+        const NEON_PALETTES = [
+            { name: "Cyan / Lime / Magenta", colors: ["#00ffff", "#7cff00", "#ff4dff"], skin: "cyber" },
+            { name: "Aqua / Yellow / Pink", colors: ["#00e5ff", "#ffd000", "#ff5cff"], skin: "aqua" },
+            { name: "Mint / Green / Violet", colors: ["#4dffff", "#4dff88", "#b84dff"], skin: "mint" },
+            { name: "Lava", colors: ["#ff6a00", "#ff0040", "#ffd000"], skin: "lava" },
+            { name: "Prismatic", colors: ["#3cfffc", "#c6ff00", "#ff3cf5"], skin: "prism" },
+            { name: "Synthwave", colors: ["#ff4fc8", "#865dff", "#32c5ff"], skin: "wave" },
+            { name: "Deep Ocean", colors: ["#02d6df", "#0b69ff", "#55f0ac"], skin: "ocean" },
+            { name: "Ember / Copper", colors: ["#ffb547", "#ff4b28", "#d94dff"], skin: "copper" },
+            { name: "Emerald Night", colors: ["#2cff9a", "#c8ff5a", "#12a0a3"], skin: "emerald" },
+            { name: "Amethyst", colors: ["#b58aff", "#ff7bcf", "#637bff"], skin: "amethyst" },
+            { name: "Glacier", colors: ["#dcffff", "#83c5ff", "#6ffff0"], skin: "ice" },
+            { name: "Crimson Sunset", colors: ["#ff335f", "#ff865e", "#ffdd80"], skin: "crimson" }
+        ];
+
+        const PALETTE_TRANSITION_MS = 1800;
+        const THEME_CSS_PROPERTIES = {
+            bg: "--bg-base", rail: "--rail-bg", bar: "--topbar-bg",
+            paper: "--paper-bg", ink: "--editor-ink", brand: "--brand-ink",
+            chrome: "--chrome-ink", border: "--ui-border", accent: "--ui-accent",
+            hint: "--hint-ink", raw: "--raw-ink"
+        };
+
+        function hexToRgb(hex) {
+            const n = hex.replace("#", "");
+            return [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255);
+        }
+
+        let paletteFrom = NEON_PALETTES[0].colors.map(hexToRgb);
+        let paletteTo = NEON_PALETTES[0].colors.map(hexToRgb);
+        let paletteTransitionStart = -PALETTE_TRANSITION_MS;
+        let themeTimer = null;
+        let activeThemeIndex = 0;
+
+        function plasmaColorsAt(now) {
+            const progress = Math.max(0, Math.min(1, (now - paletteTransitionStart) / PALETTE_TRANSITION_MS));
+            const eased = progress * progress * (3 - 2 * progress);
+            return paletteFrom.map((a, i) => a.map((component, j) => component + (paletteTo[i][j] - component) * eased));
+        }
+
+        function applyPalette(idx) {
+            if (!Number.isInteger(idx) || idx < 0 || idx >= NEON_PALETTES.length) return;
+            const now = performance.now();
+            // Sample the actual current colors before scheduling a new fade:
+            // even fast/manual theme changes cannot create a discontinuity.
+            paletteFrom = plasmaColorsAt(now);
+            paletteTo = NEON_PALETTES[idx].colors.map(hexToRgb);
+            paletteTransitionStart = now;
+            activeThemeIndex = idx;
+
+            const root = document.documentElement.style;
+            const theme = NEON_PALETTES[idx];
+            theme.colors.forEach((color, i) => root.setProperty(["--neon-a", "--neon-b", "--neon-c"][i], color));
+            const skin = THEME_SKINS[theme.skin];
+            for (const key of Object.keys(THEME_CSS_PROPERTIES)) {
+                root.setProperty(THEME_CSS_PROPERTIES[key], skin[key]);
+            }
+        }
+
+        function shuffleNeonPalette() {
+            // Exclude the current palette, so each automatic change is visible.
+            const other = Math.floor(Math.random() * (NEON_PALETTES.length - 1));
+            const idx = other >= activeThemeIndex ? other + 1 : other;
+            applyPalette(idx);
+            const sel = document.getElementById("themeSelect");
+            if (sel && sel.value === "-1") {
+                sel.options[0].text = "Auto Random (" + NEON_PALETTES[idx].name + ")";
+            }
+        }
+
+        function scheduleAutoTheme() {
+            clearTimeout(themeTimer);
+            themeTimer = setTimeout(() => {
+                shuffleNeonPalette();
+                scheduleAutoTheme();
+            }, 90000 + Math.random() * 60000);
+        }
+
+        function startAutoTheme() {
+            clearTimeout(themeTimer);
+            shuffleNeonPalette();
+            scheduleAutoTheme();
+        }
+
+        function changeTheme(saveChoice = true) {
+            const sel = document.getElementById("themeSelect");
+            const val = Number(sel.value);
+            if (val === -1) {
+                startAutoTheme();
+            } else if (Number.isInteger(val) && val >= 0 && val < NEON_PALETTES.length) {
+                clearTimeout(themeTimer);
+                themeTimer = null;
+                sel.options[0].text = "Auto Random";
+                applyPalette(val);
+            } else {
+                return;
+            }
+            if (saveChoice) storageSet(THEME_KEY, String(val));
+        }
+
+        const selectedTheme = storageGet(THEME_KEY);
+        if (selectedTheme !== null && [...document.getElementById("themeSelect").options].some(option => option.value === selectedTheme)) {
+            document.getElementById("themeSelect").value = selectedTheme;
+        }
+        changeTheme(false);
+
+        // --- Keyboard shortcuts ---
+
+        document.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "s") {
+                e.preventDefault();
+                e.stopPropagation();
+                exportMD();
+            }
+        }, true);
+
+        editor.addEventListener("keydown", (e) => {
+            if (e.key === "Tab") {
+                e.preventDefault();
+                e.stopPropagation();
+                document.execCommand("insertHTML", false, "&#160;&#160;&#160;&#160;");
+            }
+        }, true);
+
+        // --- Plasma Canvas ---
+
+        const plasmaCv = document.getElementById("plasma-cv");
+        const plasmaCtx = plasmaCv.getContext("2d");
+        const DPR = window.devicePixelRatio || 1;
+
+        // Low-res offscreen buffer
+        const PW = 140, PH = 100;
+        const offCv = document.createElement("canvas");
+        offCv.width = PW;
+        offCv.height = PH;
+        const offCtx = offCv.getContext("2d");
+        const imgData = offCtx.createImageData(PW, PH);
+        const px = imgData.data;
+
+        let plasmaT = 0;
+
+        // All four wave speeds (1, 0.6, 0.8, 1.2) complete an integer
+        // number of cycles over 10*PI. Wrapping there is seam-free.
+        const PLASMA_PERIOD = 10 * Math.PI;
+
+        function drawPlasma() {
+            const cols = plasmaColorsAt(performance.now());
+            for (let y = 0; y < PH; y++) {
+                for (let x = 0; x < PW; x++) {
+                    const nx = x / PW, ny = y / PH;
+                    const v =
+                        Math.sin(nx * 7 + plasmaT * 1.0) * 0.25 +
+                        Math.sin(ny * 5 + plasmaT * 0.6) * 0.25 +
+                        Math.sin((nx + ny) * 8 + plasmaT * 0.8) * 0.20 +
+                        Math.sin(Math.sqrt((nx - .5) ** 2 + (ny - .5) ** 2) * 11 + plasmaT * 1.2) * 0.30;
+
+                    // blend between the 3 neon palette colours
+                    const nv = v * 0.5 + 0.5; // 0..1
+                    const seg = nv * 2; // 0..2
+                    let r, g, b;
+                    if (seg < 1) {
+                        r = cols[0][0] * (1 - seg) + cols[1][0] * seg;
+                        g = cols[0][1] * (1 - seg) + cols[1][1] * seg;
+                        b = cols[0][2] * (1 - seg) + cols[1][2] * seg;
+                    } else {
+                        const s2 = seg - 1;
+                        r = cols[1][0] * (1 - s2) + cols[2][0] * s2;
+                        g = cols[1][1] * (1 - s2) + cols[2][1] * s2;
+                        b = cols[1][2] * (1 - s2) + cols[2][2] * s2;
+                    }
+
+                    const i = (y * PW + x) * 4;
+                    px[i] = r * 255 | 0;
+                    px[i + 1] = g * 255 | 0;
+                    px[i + 2] = b * 255 | 0;
+                    px[i + 3] = 255;
+                }
+            }
+            offCtx.putImageData(imgData, 0, 0);
+        }
+
+        function resizePlasma() {
+            plasmaCv.width = window.innerWidth * DPR;
+            plasmaCv.height = window.innerHeight * DPR;
+            plasmaCv.style.width = window.innerWidth + "px";
+            plasmaCv.style.height = window.innerHeight + "px";
+            plasmaCtx.setTransform(1, 0, 0, 1, 0, 0);
+            plasmaCtx.scale(DPR, DPR);
+        }
+        resizePlasma();
+        window.addEventListener("resize", resizePlasma);
+
+        function renderPlasma() {
+            const W = plasmaCv.width / DPR;
+            const H = plasmaCv.height / DPR;
+
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+            // No ctx.filter blur — blur is done via CSS on the element itself (GPU composite, free)
+            // Just draw the low-res offscreen scaled up; CSS blur handles the softness
+            plasmaCtx.fillStyle = "#000";
+            plasmaCtx.fillRect(0, 0, W, H);
+
+            const tileH = H + 200;
+            const offsetY = -(scrollY * 0.4) % tileH;
+            plasmaCtx.drawImage(offCv, 0, offsetY, W, tileH);
+            if (offsetY > -200) plasmaCtx.drawImage(offCv, 0, offsetY - tileH, W, tileH);
+
+            // second pass at lower opacity, different scroll speed — no filter needed
+            plasmaCtx.globalAlpha = 0.28;
+            const offsetY2 = -(scrollY * 0.25) % tileH;
+            plasmaCtx.drawImage(offCv, 0, offsetY2, W, tileH);
+            plasmaCtx.globalAlpha = 1.0;
+        }
+
+        // Plasma runs on its own interval — completely decoupled from rAF
+        // so typing/input never competes with plasma rendering
+        setInterval(() => {
+            plasmaT = (plasmaT + 0.06) % PLASMA_PERIOD;
+            drawPlasma();
+            renderPlasma();
+        }, 100); // 10fps = 100ms
+
+        // Scroll: only re-render (no redraw of plasma math, just reposition)
+        document.querySelector(".wrap").addEventListener("scroll", renderPlasma, { passive: true });
+
+    </script>
+</body>
+</html>
