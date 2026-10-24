@@ -7,7 +7,7 @@
 
     <style>
         :root {
-            --ink-base: #b7f7ff;
+            --ink-base: var(--raw-ink);
             --bg-base: #050608;
             --borderW: 56px;
             --radius: 18px;
@@ -16,6 +16,16 @@
             --neon-a: #00ffff;
             --neon-b: #7cff00;
             --neon-c: #ff4dff;
+            --rail-bg: #000000;
+            --topbar-bg: #06080a;
+            --paper-bg: #080f12;
+            --editor-ink: #ffffff;
+            --brand-ink: #d6e2e8;
+            --chrome-ink: #c9d6dd;
+            --ui-border: #58646b;
+            --ui-accent: #78ffff;
+            --hint-ink: #9adfff;
+            --raw-ink: #b7f7ff;
         }
 
         html, body {
@@ -33,7 +43,14 @@
         }
 
         .rail {
-            background: #000;
+            background: var(--rail-bg);
+        }
+
+        /* Theme colors fade independently of the canvas palette. */
+        html, body, .rail, .topbar, .paper, .btn, .brand, .hint,
+        .editor, .editor-raw, .status {
+            transition: background-color 1800ms ease, color 1800ms ease,
+                        border-color 1800ms ease, box-shadow 1800ms ease;
         }
 
         .center {
@@ -48,9 +65,9 @@
             gap: 10px;
             align-items: center;
             padding: 14px 18px;
-            background: rgba(6,8,10,.85);
-            color: #b8c7cf;
-            box-shadow: inset 0 -1px 0 rgba(120,255,255,.25), 0 8px 24px rgba(0,0,0,.6);
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
+            box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-accent) 25%, transparent), 0 8px 24px rgba(0,0,0,.6);
             flex-wrap: wrap;
             min-width: 0;
         }
@@ -61,32 +78,32 @@
             font-weight: 700;
             font-size: 16px;
             letter-spacing: .6px;
-            color: #d6e2e8;
+            color: var(--brand-ink);
         }
 
         .btn {
             background: transparent;
-            border: 1px solid rgba(160,180,190,.35);
+            border: 1px solid var(--ui-border);
             border-radius: 10px;
             padding: 8px 16px;
             cursor: pointer;
-            color: #c9d6dd;
+            color: var(--chrome-ink);
             font-size: 14px;
             text-shadow: none;
         }
 
             .btn:hover {
-                border-color: rgba(120,255,255,.65);
-                color: #e6faff;
+                border-color: var(--ui-accent);
+                color: var(--ui-accent);
             }
 
         select.btn option {
-            background: var(--bg-base);
-            color: #c9d6dd;
+            background: var(--topbar-bg);
+            color: var(--chrome-ink);
         }
 
         .separator {
-            border-left: 1px solid rgba(160,180,190,.35);
+            border-left: 1px solid var(--ui-border);
             height: 20px;
             margin: 0 4px;
         }
@@ -99,8 +116,8 @@
 
         .paper {
             border-radius: var(--radius);
-            background: rgba(0,0,0,.22);
-            box-shadow: 0 0 34px rgba(56,242,255,.10), inset 0 0 26px rgba(0,0,0,.55);
+            background: var(--paper-bg);
+            box-shadow: 0 0 34px color-mix(in srgb, var(--ui-accent) 12%, transparent), inset 0 0 26px rgba(0,0,0,.55);
             position: relative;
         }
 
@@ -108,17 +125,14 @@
             padding: 10px 14px;
             font-size: 12px;
             opacity: .75;
-            color: #9adfff;
+            color: var(--hint-ink);
         }
 
+        /* The original 0% -> 300% loop snapped back on repeat.
+           This definition is currently unused, but now closes seamlessly. */
         @keyframes neonFlow {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            100% {
-                background-position: 300% 50%;
-            }
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .editor {
@@ -126,8 +140,8 @@
             outline: none;
             line-height: 1.75;
             font-size: 22px;
-            color: #ffffff;
-            caret-color: #b7f7ff;
+            color: var(--editor-ink);
+            caret-color: var(--raw-ink);
         }
 
             .editor h1, .editor h2, .editor h3,
@@ -175,8 +189,8 @@
             padding: 12px 16px;
             font-size: 11px;
             letter-spacing: .3px;
-            color: rgba(180,190,195,.65);
-            border-top: 1px solid rgba(120,255,255,.18);
+            color: var(--chrome-ink);
+            border-top: 1px solid color-mix(in srgb, var(--ui-accent) 18%, transparent);
         }
 
         .filename-input {
@@ -187,7 +201,8 @@
         }
 
             .filename-input::placeholder {
-                color: rgba(160,180,190,.45);
+                color: var(--chrome-ink);
+            opacity: .55;
             }
 
         .editor-raw {
@@ -197,8 +212,8 @@
             font-size: 15px;
             font-family: var(--mono);
             background: transparent;
-            color: #b7f7ff;
-            caret-color: #b7f7ff;
+            color: var(--raw-ink);
+            caret-color: var(--raw-ink);
             white-space: pre-wrap;
             word-break: break-word;
             width: 100%;
@@ -209,11 +224,11 @@
         }
 
         ::selection {
-            background: rgba(56,242,255,.35);
+            background: color-mix(in srgb, var(--ui-accent) 35%, transparent);
         }
 
         .storage-warning { color: #ff9b9b; }
-        .storage-ok { color: rgba(180,190,195,.65); }
+        .storage-ok { color: var(--chrome-ink); }
 
         @media (max-width: 700px) {
             :root { --borderW: 8px; }
@@ -249,7 +264,7 @@
 
         <div class="center">
             <div class="topbar">
-                <b class="brand">NEMADEO v1.2</b>
+                <b class="brand">NEMADEO v1.1</b>
                 <button class="btn" data-rich-tool onclick="cmd('bold')"><b>B</b></button>
                 <button class="btn" data-rich-tool onclick="cmd('italic')"><i>I</i></button>
 
@@ -278,13 +293,20 @@
                 <button id="toggleViewBtn" class="btn" onclick="toggleRawView()">Raw</button>
                 <button class="btn" onclick="exportMD()">Export .md</button>
 
-                <select class="btn" id="themeSelect" style="margin-left: auto;" onchange="changeTheme()">
+                <select class="btn" id="themeSelect" style="margin-left: auto;" aria-label="Color theme" onchange="changeTheme()">
                     <option value="-1">Auto Random</option>
                     <option value="0">Cyan / Lime / Magenta</option>
                     <option value="1">Aqua / Yellow / Pink</option>
                     <option value="2">Mint / Green / Violet</option>
                     <option value="3">Lava</option>
                     <option value="4">Prismatic</option>
+                    <option value="5">Synthwave</option>
+                    <option value="6">Deep Ocean</option>
+                    <option value="7">Ember / Copper</option>
+                    <option value="8">Emerald Night</option>
+                    <option value="9">Amethyst</option>
+                    <option value="10">Glacier</option>
+                    <option value="11">Crimson Sunset</option>
                 </select>
             </div>
 
@@ -313,6 +335,7 @@
         const LEGACY_KEY = "neon_writer_md_v3";
         const KEY = "neon_writer_markdown_v4";
         const FILENAME_KEY = "neon_writer_filename";
+        const THEME_KEY = "neon_writer_theme";
 
         function storageGet(key) {
             try { return localStorage.getItem(key); }
@@ -737,27 +760,88 @@
         editor.innerHTML = markdownToHTML(currentMarkdown);
         updateCounts();
 
-        // --- Neon themes ---
+        // --- Color themes: the original five plus seven new palettes ---
+
+        // A theme supplies both three plasma colors and accessible UI colors.
+        // Theme changes interpolate rather than snapping to new RGB values.
+        const THEME_SKINS = {
+            cyber: { bg: "#050608", rail: "#000000", bar: "#06080a", paper: "#080f12", ink: "#ffffff", brand: "#d6e2e8", chrome: "#c9d6dd", border: "#58646b", accent: "#78ffff", hint: "#9adfff", raw: "#b7f7ff" },
+            aqua: { bg: "#030b12", rail: "#010408", bar: "#051621", paper: "#06131d", ink: "#f7ffff", brand: "#d1f9ff", chrome: "#bbe6ec", border: "#406674", accent: "#36eeff", hint: "#7adfff", raw: "#c0f6ff" },
+            mint: { bg: "#040e0c", rail: "#010706", bar: "#071814", paper: "#091b17", ink: "#f3fff8", brand: "#d2ffe1", chrome: "#b3e3ce", border: "#436c60", accent: "#56f5ab", hint: "#82dfbc", raw: "#b9ffe0" },
+            lava: { bg: "#100604", rail: "#060100", bar: "#1b0b08", paper: "#190b0a", ink: "#fff4ec", brand: "#ffe0cb", chrome: "#f2c8b4", border: "#8a5245", accent: "#ff9c56", hint: "#ffd08d", raw: "#ffe2b8" },
+            prism: { bg: "#0c0710", rail: "#050207", bar: "#170d1c", paper: "#150e1c", ink: "#fff5ff", brand: "#fae1ff", chrome: "#d8c3e5", border: "#69557b", accent: "#ee80f5", hint: "#e5a6fa", raw: "#f4dbff" },
+            wave: { bg: "#10051f", rail: "#05000e", bar: "#200e33", paper: "#1c0c2f", ink: "#fff4ff", brand: "#fbd4ff", chrome: "#d9c5f3", border: "#76528d", accent: "#ff75de", hint: "#f4a3fa", raw: "#f5daff" },
+            ocean: { bg: "#020c19", rail: "#00040a", bar: "#071728", paper: "#091c2c", ink: "#eefcff", brand: "#cff7ff", chrome: "#b4d6ed", border: "#3d6580", accent: "#3fe3e8", hint: "#7bdbf4", raw: "#cef6ff" },
+            copper: { bg: "#130c07", rail: "#050301", bar: "#221508", paper: "#1e160f", ink: "#fff9eb", brand: "#ffe5bb", chrome: "#e8ccaa", border: "#846345", accent: "#ffc36b", hint: "#f1d18f", raw: "#ffecce" },
+            emerald: { bg: "#03100b", rail: "#000604", bar: "#082017", paper: "#0a1b14", ink: "#f1fff5", brand: "#ceffe2", chrome: "#b0e6cc", border: "#356d54", accent: "#53f5a1", hint: "#8ce9b6", raw: "#bfffda" },
+            amethyst: { bg: "#0d081b", rail: "#04020b", bar: "#1b1030", paper: "#160e27", ink: "#faf2ff", brand: "#e7d6ff", chrome: "#d6c5ef", border: "#655481", accent: "#bd97ff", hint: "#d7bcff", raw: "#eadcff" },
+            ice: { bg: "#07131c", rail: "#02070d", bar: "#0c2636", paper: "#102431", ink: "#f5fdff", brand: "#e0faff", chrome: "#c1e5f0", border: "#56798c", accent: "#adf9ff", hint: "#a9ebff", raw: "#e1faff" },
+            crimson: { bg: "#16090e", rail: "#070205", bar: "#270f17", paper: "#210e15", ink: "#fff5f5", brand: "#ffe1e7", chrome: "#ecc8cb", border: "#87525d", accent: "#ff8698", hint: "#ffb0a1", raw: "#ffe3df" }
+        };
 
         const NEON_PALETTES = [
-            { name: "Cyan / Lime / Magenta", colors: ["#00ffff", "#7cff00", "#ff4dff"] },
-            { name: "Aqua / Yellow / Pink", colors: ["#00e5ff", "#ffd000", "#ff5cff"] },
-            { name: "Mint / Green / Violet", colors: ["#4dffff", "#4dff88", "#b84dff"] },
-            { name: "Lava", colors: ["#ff6a00", "#ff0040", "#ffd000"] },
-            { name: "Prismatic", colors: ["#3cfffc", "#c6ff00", "#ff3cf5"] }
+            { name: "Cyan / Lime / Magenta", colors: ["#00ffff", "#7cff00", "#ff4dff"], skin: "cyber" },
+            { name: "Aqua / Yellow / Pink", colors: ["#00e5ff", "#ffd000", "#ff5cff"], skin: "aqua" },
+            { name: "Mint / Green / Violet", colors: ["#4dffff", "#4dff88", "#b84dff"], skin: "mint" },
+            { name: "Lava", colors: ["#ff6a00", "#ff0040", "#ffd000"], skin: "lava" },
+            { name: "Prismatic", colors: ["#3cfffc", "#c6ff00", "#ff3cf5"], skin: "prism" },
+            { name: "Synthwave", colors: ["#ff4fc8", "#865dff", "#32c5ff"], skin: "wave" },
+            { name: "Deep Ocean", colors: ["#02d6df", "#0b69ff", "#55f0ac"], skin: "ocean" },
+            { name: "Ember / Copper", colors: ["#ffb547", "#ff4b28", "#d94dff"], skin: "copper" },
+            { name: "Emerald Night", colors: ["#2cff9a", "#c8ff5a", "#12a0a3"], skin: "emerald" },
+            { name: "Amethyst", colors: ["#b58aff", "#ff7bcf", "#637bff"], skin: "amethyst" },
+            { name: "Glacier", colors: ["#dcffff", "#83c5ff", "#6ffff0"], skin: "ice" },
+            { name: "Crimson Sunset", colors: ["#ff335f", "#ff865e", "#ffdd80"], skin: "crimson" }
         ];
 
+        const PALETTE_TRANSITION_MS = 1800;
+        const THEME_CSS_PROPERTIES = {
+            bg: "--bg-base", rail: "--rail-bg", bar: "--topbar-bg",
+            paper: "--paper-bg", ink: "--editor-ink", brand: "--brand-ink",
+            chrome: "--chrome-ink", border: "--ui-border", accent: "--ui-accent",
+            hint: "--hint-ink", raw: "--raw-ink"
+        };
+
+        function hexToRgb(hex) {
+            const n = hex.replace("#", "");
+            return [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255);
+        }
+
+        let paletteFrom = NEON_PALETTES[0].colors.map(hexToRgb);
+        let paletteTo = NEON_PALETTES[0].colors.map(hexToRgb);
+        let paletteTransitionStart = -PALETTE_TRANSITION_MS;
         let themeTimer = null;
+        let activeThemeIndex = 0;
+
+        function plasmaColorsAt(now) {
+            const progress = Math.max(0, Math.min(1, (now - paletteTransitionStart) / PALETTE_TRANSITION_MS));
+            const eased = progress * progress * (3 - 2 * progress);
+            return paletteFrom.map((a, i) => a.map((component, j) => component + (paletteTo[i][j] - component) * eased));
+        }
 
         function applyPalette(idx) {
-            const p = NEON_PALETTES[idx].colors;
-            document.documentElement.style.setProperty("--neon-a", p[0]);
-            document.documentElement.style.setProperty("--neon-b", p[1]);
-            document.documentElement.style.setProperty("--neon-c", p[2]);
+            if (!Number.isInteger(idx) || idx < 0 || idx >= NEON_PALETTES.length) return;
+            const now = performance.now();
+            // Sample the actual current colors before scheduling a new fade:
+            // even fast/manual theme changes cannot create a discontinuity.
+            paletteFrom = plasmaColorsAt(now);
+            paletteTo = NEON_PALETTES[idx].colors.map(hexToRgb);
+            paletteTransitionStart = now;
+            activeThemeIndex = idx;
+
+            const root = document.documentElement.style;
+            const theme = NEON_PALETTES[idx];
+            theme.colors.forEach((color, i) => root.setProperty(["--neon-a", "--neon-b", "--neon-c"][i], color));
+            const skin = THEME_SKINS[theme.skin];
+            for (const key of Object.keys(THEME_CSS_PROPERTIES)) {
+                root.setProperty(THEME_CSS_PROPERTIES[key], skin[key]);
+            }
         }
 
         function shuffleNeonPalette() {
-            const idx = Math.floor(Math.random() * NEON_PALETTES.length);
+            // Exclude the current palette, so each automatic change is visible.
+            const other = Math.floor(Math.random() * (NEON_PALETTES.length - 1));
+            const idx = other >= activeThemeIndex ? other + 1 : other;
             applyPalette(idx);
             const sel = document.getElementById("themeSelect");
             if (sel && sel.value === "-1") {
@@ -765,25 +849,41 @@
             }
         }
 
-        function startAutoTheme() {
-            clearInterval(themeTimer);
-            shuffleNeonPalette();
-            themeTimer = setInterval(shuffleNeonPalette, 90000 + Math.random() * 60000);
+        function scheduleAutoTheme() {
+            clearTimeout(themeTimer);
+            themeTimer = setTimeout(() => {
+                shuffleNeonPalette();
+                scheduleAutoTheme();
+            }, 90000 + Math.random() * 60000);
         }
 
-        function changeTheme() {
+        function startAutoTheme() {
+            clearTimeout(themeTimer);
+            shuffleNeonPalette();
+            scheduleAutoTheme();
+        }
+
+        function changeTheme(saveChoice = true) {
             const sel = document.getElementById("themeSelect");
-            const val = parseInt(sel.value, 10);
+            const val = Number(sel.value);
             if (val === -1) {
                 startAutoTheme();
-            } else {
-                clearInterval(themeTimer);
+            } else if (Number.isInteger(val) && val >= 0 && val < NEON_PALETTES.length) {
+                clearTimeout(themeTimer);
+                themeTimer = null;
                 sel.options[0].text = "Auto Random";
                 applyPalette(val);
+            } else {
+                return;
             }
+            if (saveChoice) storageSet(THEME_KEY, String(val));
         }
 
-        startAutoTheme();
+        const selectedTheme = storageGet(THEME_KEY);
+        if (selectedTheme !== null && [...document.getElementById("themeSelect").options].some(option => option.value === selectedTheme)) {
+            document.getElementById("themeSelect").value = selectedTheme;
+        }
+        changeTheme(false);
 
         // --- Keyboard shortcuts ---
 
@@ -820,25 +920,12 @@
 
         let plasmaT = 0;
 
-        // Current neon palette pulled from CSS vars
-        function getNeonColors() {
-            const style = getComputedStyle(document.documentElement);
-            function hexToRgb(hex) {
-                hex = hex.trim();
-                const r = parseInt(hex.slice(1, 3), 16) / 255;
-                const g = parseInt(hex.slice(3, 5), 16) / 255;
-                const b = parseInt(hex.slice(5, 7), 16) / 255;
-                return [r, g, b];
-            }
-            return [
-                hexToRgb(style.getPropertyValue("--neon-a")),
-                hexToRgb(style.getPropertyValue("--neon-b")),
-                hexToRgb(style.getPropertyValue("--neon-c")),
-            ];
-        }
+        // All four wave speeds (1, 0.6, 0.8, 1.2) complete an integer
+        // number of cycles over 10*PI. Wrapping there is seam-free.
+        const PLASMA_PERIOD = 10 * Math.PI;
 
         function drawPlasma() {
-            const cols = getNeonColors();
+            const cols = plasmaColorsAt(performance.now());
             for (let y = 0; y < PH; y++) {
                 for (let x = 0; x < PW; x++) {
                     const nx = x / PW, ny = y / PH;
@@ -910,7 +997,7 @@
         // Plasma runs on its own interval — completely decoupled from rAF
         // so typing/input never competes with plasma rendering
         setInterval(() => {
-            plasmaT += 0.06;
+            plasmaT = (plasmaT + 0.06) % PLASMA_PERIOD;
             drawPlasma();
             renderPlasma();
         }, 100); // 10fps = 100ms
