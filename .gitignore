@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# NEMADEO private backend files
+**/resend.key
+**/keys/
+**/waitlist.json
+**/waitlist.json.tmp

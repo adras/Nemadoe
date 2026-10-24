@@ -51,7 +51,11 @@
             background: rgba(6,8,10,.85);
             color: #b8c7cf;
             box-shadow: inset 0 -1px 0 rgba(120,255,255,.25), 0 8px 24px rgba(0,0,0,.6);
+            flex-wrap: wrap;
+            min-width: 0;
         }
+
+        .topbar > * { flex-shrink: 0; }
 
         .brand {
             font-weight: 700;
@@ -127,8 +131,7 @@
         }
 
             .editor h1, .editor h2, .editor h3,
-            .editor h4, .editor h5, .editor h6,
-            .editor h7, .editor h8, .editor h9, .editor h10 {
+            .editor h4, .editor h5, .editor h6 {
                 line-height: 1.25;
                 margin: .6em 0 .4em;
             }
@@ -155,22 +158,6 @@
 
             .editor h6 {
                 font-size: 0.67em;
-            }
-
-            .editor h7 {
-                font-size: 0.6em;
-            }
-
-            .editor h8 {
-                font-size: 0.55em;
-            }
-
-            .editor h9 {
-                font-size: 0.5em;
-            }
-
-            .editor h10 {
-                font-size: 0.45em;
             }
 
             .editor pre {
@@ -225,20 +212,18 @@
             background: rgba(56,242,255,.35);
         }
 
-        #fps-overlay {
-            position: fixed;
-            bottom: 12px;
-            right: 16px;
-            font-family: var(--mono);
-            font-size: 12px;
-            color: rgba(0,255,255,.75);
-            background: rgba(0,0,0,.55);
-            border: 1px solid rgba(0,255,255,.2);
-            border-radius: 8px;
-            padding: 4px 10px;
-            pointer-events: none;
-            z-index: 9999;
-            letter-spacing: .5px;
+        .storage-warning { color: #ff9b9b; }
+        .storage-ok { color: rgba(180,190,195,.65); }
+
+        @media (max-width: 700px) {
+            :root { --borderW: 8px; }
+            .topbar { gap: 5px; padding: 8px; }
+            .topbar .btn { padding: 6px 8px; font-size: 12px; }
+            .topbar .brand { width: 100%; }
+            .topbar .separator { display: none; }
+            .wrap { padding: 8px; }
+            .editor, .editor-raw { padding: 14px; }
+            .filename-input { width: 100px; }
         }
 
         /* Plasma canvas overlay - fixed fullscreen */
@@ -259,38 +244,33 @@
 
 <body>
     <canvas id="plasma-cv"></canvas>
-    <div id="fps-overlay">⬡ <span id="fps-value">--</span> fps</div>
     <div class="frame">
         <div class="rail"></div>
 
         <div class="center">
             <div class="topbar">
-                <b class="brand">NEMADEO v1.1</b>
-                <button class="btn" onclick="cmd('bold')"><b>B</b></button>
-                <button class="btn" onclick="cmd('italic')"><i>I</i></button>
+                <b class="brand">NEMADEO v1.2</b>
+                <button class="btn" data-rich-tool onclick="cmd('bold')"><b>B</b></button>
+                <button class="btn" data-rich-tool onclick="cmd('italic')"><i>I</i></button>
 
                 <span class="separator"></span>
-                <button class="btn" onclick="setHeading('p')">Normal</button>
+                <button class="btn" data-rich-tool onclick="setHeading('p')">Normal</button>
                 <span class="separator"></span>
 
-                <button class="btn" onclick="setHeading('h1')">H1</button>
-                <button class="btn" onclick="setHeading('h2')">H2</button>
-                <button class="btn" onclick="setHeading('h3')">H3</button>
-                <button class="btn" onclick="setHeading('h4')">H4</button>
-                <button class="btn" onclick="setHeading('h5')">H5</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h1')">H1</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h2')">H2</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h3')">H3</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h4')">H4</button>
+                <button class="btn" data-rich-tool onclick="setHeading('h5')">H5</button>
 
-                <select class="btn" onchange="if(this.value){ setHeading(this.value); this.value=''; }">
+                <select class="btn" data-rich-tool onchange="if(this.value){ setHeading(this.value); this.value=''; }">
                     <option value="">Hx...</option>
                     <option value="h6">H6</option>
-                    <option value="h7">H7</option>
-                    <option value="h8">H8</option>
-                    <option value="h9">H9</option>
-                    <option value="h10">H10</option>
                 </select>
 
-                <button class="btn" onclick="cmd('insertUnorderedList')">&bull;</button>
-                <button class="btn" onclick="cmd('insertOrderedList')">1.</button>
-                <button class="btn" onclick="insertCodeBlock()">code</button>
+                <button class="btn" data-rich-tool onclick="cmd('insertUnorderedList')">&bull;</button>
+                <button class="btn" data-rich-tool onclick="cmd('insertOrderedList')">1.</button>
+                <button class="btn" data-rich-tool onclick="insertCodeBlock()">code</button>
 
                 <input id="importInput" type="file" accept=".md,text/markdown,text/plain" style="display:none" onchange="importMD(this)" />
                 <button class="btn" onclick="document.getElementById('importInput').click()">Import .md</button>
@@ -306,7 +286,6 @@
                     <option value="3">Lava</option>
                     <option value="4">Prismatic</option>
                 </select>
-                <button class="btn" id="fpsBtn" onclick="toggleFPS()" style="margin-left:8px;font-family:var(--mono);font-size:11px;">fps</button>
             </div>
 
             <div class="wrap">
@@ -316,6 +295,7 @@
 
                     <div class="status">
                         Words <b id="wc">0</b> | Characters <b id="cc">0</b>
+                        <span id="saveStatus" class="storage-ok" role="status" aria-live="polite"></span>
                     </div>
                 </div>
             </div>
@@ -329,28 +309,58 @@
         const wcEl = document.getElementById("wc");
         const ccEl = document.getElementById("cc");
 
-        const KEY = "neon_writer_md_v3";
+        // The existing v3 key contains HTML. Keep it untouched for migration/recovery.
+        const LEGACY_KEY = "neon_writer_md_v3";
+        const KEY = "neon_writer_markdown_v4";
         const FILENAME_KEY = "neon_writer_filename";
+
+        function storageGet(key) {
+            try { return localStorage.getItem(key); }
+            catch (e) { showSaveError(); return null; }
+        }
+
+        function storageSet(key, value) {
+            try { localStorage.setItem(key, value); return true; }
+            catch (e) { showSaveError(); return false; }
+        }
+
+        function showSaveError() {
+            const indicator = document.getElementById("saveStatus");
+            if (indicator) {
+                indicator.textContent = " | Save failed: storage unavailable. Export your text!";
+                indicator.className = "storage-warning";
+            }
+        }
+
+        function showSaved() {
+            const indicator = document.getElementById("saveStatus");
+            if (indicator) {
+                indicator.textContent = " | Saved locally";
+                indicator.className = "storage-ok";
+            }
+        }
 
         // --- Filename input ---
 
         const filenameInput = document.getElementById("filenameInput");
 
-        const savedFilename = localStorage.getItem(FILENAME_KEY);
+        const savedFilename = storageGet(FILENAME_KEY);
         if (savedFilename) filenameInput.value = savedFilename;
 
         filenameInput.addEventListener("input", () => {
-            localStorage.setItem(FILENAME_KEY, filenameInput.value);
+            storageSet(FILENAME_KEY, filenameInput.value);
         });
 
         // --- WYSIWYG commands ---
 
         function cmd(c, v = null) {
+            if (isRawView) return;
             editor.focus();
-            document.execCommand(c, false, v);
+            if (document.execCommand(c, false, v)) markEditorEdited();
         }
 
         function setHeading(tag) {
+            if (isRawView) return;
             editor.focus();
             const success = document.execCommand("formatBlock", false, tag);
 
@@ -363,9 +373,11 @@
                     range.insertNode(el);
                 }
             }
+            markEditorEdited();
         }
 
         function insertCodeBlock() {
+            if (isRawView) return;
             editor.focus();
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
@@ -378,6 +390,7 @@
                     const fragment = document.createDocumentFragment();
                     while (node.firstChild) fragment.appendChild(node.firstChild);
                     node.parentNode.replaceChild(fragment, node);
+                    markEditorEdited();
                     return;
                 }
                 node = node.parentNode;
@@ -393,6 +406,7 @@
                 range.insertNode(pre);
             }
             placeCursorInside(pre);
+            markEditorEdited();
         }
 
         function placeCursorInside(el) {
@@ -404,226 +418,324 @@
             sel.addRange(range);
         }
 
-        // --- Word / character count ---
+        // --- Document state and counting ---
+        // Canonical source is always Markdown; WYSIWYG is a projection of it.
+        let currentMarkdown = "";
+        let formattedDirty = false;
+        let isRawView = false;
+        let saveTimer = null;
+
+        function getCurrentMarkdown() {
+            const raw = document.getElementById("rawEditor");
+            if (raw) return raw.value;
+            return formattedDirty ? editorToMarkdown() : currentMarkdown;
+        }
 
         function updateCounts() {
-            const t = editor.textContent || "";
+            const raw = document.getElementById("rawEditor");
+            const t = raw ? raw.value : (editor.innerText || editor.textContent || "");
             wcEl.textContent = t.trim() ? t.trim().split(/\s+/u).length : 0;
             ccEl.textContent = [...t].length;
         }
 
-        // --- Autosave ---
-
-        let saveTimer = null;
-
-        editor.addEventListener("input", () => {
-            updateCounts();
+        function flushSave() {
             clearTimeout(saveTimer);
-            saveTimer = setTimeout(() => localStorage.setItem(KEY, editor.innerHTML), 300);
+            saveTimer = null;
+            currentMarkdown = getCurrentMarkdown();
+            formattedDirty = false;
+            if (storageSet(KEY, currentMarkdown)) showSaved();
+        }
+
+        function queueSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(flushSave, 300);
+        }
+
+        function markEditorEdited() {
+            formattedDirty = true;
+            updateCounts();
+            queueSave();
+        }
+        editor.addEventListener("input", markEditorEdited);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden" && saveTimer !== null) flushSave();
+        });
+        window.addEventListener("pagehide", () => {
+            if (saveTimer !== null) flushSave();
         });
 
-        const saved = localStorage.getItem(KEY);
-        if (saved) editor.innerHTML = saved;
-        updateCounts();
+        // --- Markdown serialization ---
 
-        // --- HTML → Markdown ---
+        function codeFence(content, preferred = "```") {
+            const marker = preferred[0] === "~" ? "~" : "`";
+            let length = Math.max(3, preferred.length);
+            for (const match of content.matchAll(marker === "`" ? /`+/g : /~+/g)) {
+                length = Math.max(length, match[0].length + 1);
+            }
+            return marker.repeat(length);
+        }
+
+        function textInside(node) {
+            if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+            if (node.nodeType !== Node.ELEMENT_NODE) return "";
+            if (node.tagName === "BR") return "\n";
+            let text = [...node.childNodes].map(textInside).join("");
+            if (node.tagName === "DIV" || node.tagName === "P") text += "\n";
+            return text;
+        }
 
         function toMarkdown(node) {
-            if (node.nodeType === 3) return node.textContent;
-            if (node.nodeType !== 1) return "";
-
+            if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+            if (node.nodeType !== Node.ELEMENT_NODE) return "";
             const t = node.tagName.toLowerCase();
+            if (t === "br") return "  \n";
+            if (t === "pre") {
+                let code = textInside(node);
+                const fence = codeFence(code, node.dataset.fence || "```");
+                const lang = node.dataset.lang || "";
+                return `${fence}${lang}\n${code}\n${fence}`;
+            }
             const c = [...node.childNodes].map(toMarkdown).join("");
-
-            if (t === "br") return "";
             if (t === "b" || t === "strong") return `**${c}**`;
             if (t === "i" || t === "em") return `*${c}*`;
-            if (t === "code") return `\`${c}\``;
-            if (t === "pre") return `\`\`\`\n${node.innerText.trim()}\n\`\`\``;
-            if (t === "ul") return [...node.children].map(li => `- ${li.innerText.trim()}`).join("\n");
-            if (t === "ol") return [...node.children].map((li, i) => `${i + 1}. ${li.innerText.trim()}`).join("\n");
-            if (t.match(/^h\d+$/)) {
-                const level = parseInt(t.substring(1), 10);
-                const text = c.trim();
-                return text ? `${"#".repeat(level)} ${text}` : "";
+            if (t === "s" || t === "del" || t === "strike") return `~~${c}~~`;
+            if (t === "code") {
+                const ticks = codeFence(c).slice(0, Math.max(1, ...(c.match(/`+/g) || []).map(v => v.length + 1)));
+                return `${ticks}${c}${ticks}`;
             }
-            if (t === "div" || t === "p") return c.trim();
-
+            if (t === "a") {
+                const href = node.getAttribute("href") || "";
+                if (/^(https?:\/\/|mailto:|#|\/)/i.test(href)) return `[${c}](${href})`;
+                return c;
+            }
+            if (/^h[1-6]$/.test(t)) return `${"#".repeat(Number(t[1]))} ${c}`;
+            if (t === "li") return c.replace(/\n$/, "");
+            if (t === "ul") return [...node.children].filter(n => n.tagName === "LI")
+                .map(li => `- ${toMarkdown(li)}`).join("\n");
+            if (t === "ol") {
+                const start = Number(node.getAttribute("start")) || 1;
+                return [...node.children].filter(n => n.tagName === "LI")
+                    .map((li, i) => `${start + i}. ${toMarkdown(li)}`).join("\n");
+            }
+            if (t === "blockquote") return c.split("\n").map(line => `> ${line}`).join("\n");
+            if (node.dataset.mdBlank === "1") return "";
+            if (t === "div" || t === "p") {
+                return c + (node.dataset.mdHardbreak === "1" ? "  " : "");
+            }
             return c;
         }
 
-        // Collects top-level blocks, skips empty ones, joins with a single blank line
         function editorToMarkdown() {
-            const blocks = [];
+            const parts = [];
             for (const node of editor.childNodes) {
-                const md = toMarkdown(node);
-                if (md.trim()) blocks.push(md);
+                if (node.nodeType === Node.TEXT_NODE && !node.textContent) continue;
+                parts.push(toMarkdown(node));
             }
-            return blocks.join("\n\n") + "\n";
+            return parts.join("\n");
         }
 
-        // --- Import ---
+        // --- Markdown import (all markup is HTML-escaped before rendering) ---
+
+        function escapeHTML(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function inlineMarkdown(text) {
+            const tokens = [];
+            function hold(html) { tokens.push(html); return `\x01${tokens.length - 1}\x02`; }
+            let result = escapeHTML(text);
+            result = result.replace(/(`+)([\s\S]*?)\1/g, (_m, _ticks, code) => hold(`<code>${code}</code>`));
+            result = result.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)"']+|mailto:[^\s)"']+|#[^\s)"']+|\/[^\s)"']+)\)/gi,
+                (_m, label, url) => hold(`<a href="${escapeHTML(url)}">${label}</a>`));
+            result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/__(.+?)__/g, "<strong>$1</strong>")
+                .replace(/~~(.+?)~~/g, "<del>$1</del>")
+                .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>")
+                .replace(/(?<!_)_([^_\n]+)_(?!_)/g, "<em>$1</em>");
+            return result.replace(/\x01(\d+)\x02/g, (_m, n) => tokens[Number(n)]);
+        }
+
+        function markdownToHTML(source) {
+            const md = String(source).replace(/\r\n?/g, "\n");
+            if (!md.length) return "";
+            const lines = md.split("\n");
+            const output = [];
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const fence = line.match(/^ {0,3}(`{3,}|~{3,})([^\r\n]*)$/);
+                if (fence) {
+                    const marker = fence[1][0];
+                    const startFence = fence[1];
+                    const lang = fence[2];
+                    const codeLines = [];
+                    let closed = false;
+                    while (++i < lines.length) {
+                        const candidate = lines[i].trim();
+                        if (candidate.length >= startFence.length &&
+                            [...candidate].every(ch => ch === marker)) {
+                            closed = true;
+                            break;
+                        }
+                        codeLines.push(lines[i]);
+                    }
+                    // An unclosed fence stays visible instead of discarding its content.
+                    output.push(`<pre data-fence="${startFence}" data-lang="${escapeHTML(lang)}" data-md-unclosed="${closed ? "0" : "1"}"><code>${escapeHTML(codeLines.join("\n"))}</code></pre>`);
+                    continue;
+                }
+                const heading = line.match(/^ {0,3}(#{1,6})[ \t]+(.+)$/);
+                if (heading) {
+                    const level = heading[1].length;
+                    output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+                    continue;
+                }
+                const list = line.match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
+                if (list) {
+                    const ordered = /^\d/.test(list[1]);
+                    const entries = [inlineMarkdown(list[2])];
+                    let j = i + 1;
+                    while (j < lines.length) {
+                        const next = lines[j].match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
+                        if (!next || /^\d/.test(next[1]) !== ordered) break;
+                        entries.push(inlineMarkdown(next[2]));
+                        j++;
+                    }
+                    const tag = ordered ? "ol" : "ul";
+                    const initial = ordered ? ` start="${parseInt(list[1], 10)}"` : "";
+                    output.push(`<${tag}${initial}>${entries.map(e => `<li>${e}</li>`).join("")}</${tag}>`);
+                    i = j - 1;
+                    continue;
+                }
+                if (line.startsWith("> ")) {
+                    const quoted = [line.slice(2)];
+                    let j = i + 1;
+                    while (j < lines.length && lines[j].startsWith("> ")) quoted.push(lines[j++].slice(2));
+                    output.push(`<blockquote>${quoted.map(inlineMarkdown).join("<br>")}</blockquote>`);
+                    i = j - 1;
+                    continue;
+                }
+                if (!line.length) {
+                    output.push('<div data-md-blank="1"><br></div>');
+                } else {
+                    const hardbreak = line.endsWith("  ");
+                    const text = hardbreak ? line.slice(0, -2) : line;
+                    output.push(`<div${hardbreak ? ' data-md-hardbreak="1"' : ""}>${inlineMarkdown(text)}</div>`);
+                }
+            }
+            return output.join("");
+        }
+
+        function setDocument(md) {
+            clearTimeout(saveTimer);
+            const text = String(md).replace(/\r\n?/g, "\n");
+            currentMarkdown = text;
+            formattedDirty = false;
+            editor.innerHTML = markdownToHTML(text);
+            const raw = document.getElementById("rawEditor");
+            if (raw) raw.value = text;
+            updateCounts();
+            flushSave();
+        }
 
         function importMD(input) {
             const file = input.files[0];
             if (!file) return;
-
-            const rawName = file.name.replace(/\.md$/i, "");
-            filenameInput.value = rawName;
-            localStorage.setItem(FILENAME_KEY, rawName);
-
             const reader = new FileReader();
-            reader.onload = (e) => {
-                const html = markdownToHTML(e.target.result);
-                editor.innerHTML = html;
-                localStorage.setItem(KEY, editor.innerHTML);
-                updateCounts();
+            reader.onload = () => {
+                filenameInput.value = file.name.replace(/\.md$/i, "");
+                storageSet(FILENAME_KEY, filenameInput.value);
+                setDocument(reader.result);
+            };
+            reader.onerror = () => {
+                const indicator = document.getElementById("saveStatus");
+                indicator.textContent = " | File could not be read";
+                indicator.className = "storage-warning";
             };
             reader.readAsText(file);
             input.value = "";
         }
 
-        function markdownToHTML(md) {
-            const lines = md.replace(/\n{2,}/g, "\n\n").trim().split("\n");
-            const output = [];
-            let inCode = false;
-            let codeBuf = [];
-            let prevWasText = false;
-            let prevWasBlank = false;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-
-                if (line.startsWith("```")) {
-                    if (!inCode) {
-                        inCode = true;
-                        codeBuf = [];
-                    } else {
-                        output.push(`<pre>${escapeHTML(codeBuf.join("\n"))}</pre>`);
-                        inCode = false;
-                        codeBuf = [];
-                        prevWasText = false;
-                        prevWasBlank = false;
-                    }
-                    continue;
-                }
-
-                if (inCode) { codeBuf.push(line); continue; }
-
-                const hMatch = line.match(/^(#{1,10})\s*(.*)/);
-                if (hMatch) {
-                    const text = hMatch[2].trim();
-                    if (text) {
-                        const level = hMatch[1].length;
-                        output.push(`<h${level}>${inlineMarkdown(text)}</h${level}>`);
-                    }
-                    prevWasText = false;
-                    prevWasBlank = false;
-                    continue;
-                }
-
-                if (line.startsWith("- ") || line.startsWith("* ")) {
-                    const items = [];
-                    let j = i;
-                    while (j < lines.length && (lines[j].startsWith("- ") || lines[j].startsWith("* "))) {
-                        items.push(`<li>${inlineMarkdown(lines[j].slice(2))}</li>`);
-                        j++;
-                    }
-                    output.push(`<ul>${items.join("")}</ul>`);
-                    i = j - 1;
-                    prevWasText = false;
-                    prevWasBlank = false;
-                    continue;
-                }
-
-                if (line.match(/^\d+\.\s+(.*)/)) {
-                    const items = [];
-                    let j = i;
-                    while (j < lines.length && lines[j].match(/^\d+\.\s+/)) {
-                        items.push(`<li>${inlineMarkdown(lines[j].replace(/^\d+\.\s+/, ""))}</li>`);
-                        j++;
-                    }
-                    output.push(`<ol>${items.join("")}</ol>`);
-                    i = j - 1;
-                    prevWasText = false;
-                    prevWasBlank = false;
-                    continue;
-                }
-
-                if (line.trim() === "") {
-                    if (prevWasText && !prevWasBlank) {
-                        output.push(`<div><br></div>`);
-                        prevWasBlank = true;
-                        prevWasText = false;
-                    }
-                } else {
-                    output.push(`<div>${inlineMarkdown(line)}</div>`);
-                    prevWasText = true;
-                    prevWasBlank = false;
-                }
-            }
-
-            return output.join("");
-        }
-
-        function inlineMarkdown(text) {
-            return text
-                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-                .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-                .replace(/\*(.+?)\*/g, "<i>$1</i>")
-                .replace(/`(.+?)`/g, "<code>$1</code>");
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
         // --- Raw / formatted toggle ---
 
-        let isRawView = false;
+        function setRichToolbarEnabled(enabled) {
+            for (const item of document.querySelectorAll("[data-rich-tool]")) {
+                item.disabled = !enabled;
+            }
+        }
 
         function toggleRawView() {
             const btn = document.getElementById("toggleViewBtn");
             if (!isRawView) {
-                const md = editorToMarkdown();
+                const md = getCurrentMarkdown();
                 const textarea = document.createElement("textarea");
                 textarea.id = "rawEditor";
                 textarea.className = "editor-raw";
                 textarea.value = md;
-                textarea.style.height = editor.offsetHeight + "px";
+                textarea.style.height = Math.max(300, editor.offsetHeight) + "px";
+                textarea.addEventListener("input", () => {
+                    updateCounts();
+                    queueSave();
+                });
                 editor.style.display = "none";
                 editor.parentNode.insertBefore(textarea, editor);
+                currentMarkdown = md;
+                formattedDirty = false;
                 btn.textContent = "Formatted";
                 isRawView = true;
+                setRichToolbarEnabled(false);
+                updateCounts();
             } else {
                 const textarea = document.getElementById("rawEditor");
                 const md = textarea.value;
+                currentMarkdown = md;
+                formattedDirty = false;
+                editor.innerHTML = markdownToHTML(md);
                 textarea.remove();
                 editor.style.display = "";
-                editor.innerHTML = markdownToHTML(md);
-                localStorage.setItem(KEY, editor.innerHTML);
-                updateCounts();
                 btn.textContent = "Raw";
                 isRawView = false;
+                setRichToolbarEnabled(true);
+                updateCounts();
+                flushSave();
             }
         }
 
         // --- Export ---
 
         function exportMD() {
-            const rawEl = document.getElementById("rawEditor");
-            const md = rawEl ? rawEl.value : editorToMarkdown();
+            const md = getCurrentMarkdown();
+            flushSave();
             const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
             const rawName = filenameInput.value.trim() || "neon";
-            const filename = rawName.endsWith(".md") ? rawName : rawName + ".md";
+            const filename = rawName.toLowerCase().endsWith(".md") ? rawName : rawName + ".md";
             const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
+            const url = URL.createObjectURL(blob);
+            a.href = url;
             a.download = filename;
             document.body.appendChild(a);
             a.click();
             a.remove();
-            URL.revokeObjectURL(a.href);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
+
+        // Restore v4 Markdown verbatim. Migrate existing v3 HTML without
+        // changing/deleting the previous storage value.
+        const saved = storageGet(KEY);
+        if (saved !== null) {
+            currentMarkdown = saved;
+        } else {
+            const legacyHTML = storageGet(LEGACY_KEY);
+            if (legacyHTML) {
+                const template = document.createElement("template");
+                template.innerHTML = legacyHTML;
+                const oldEditor = editor;
+                // Serialize inert DOM nodes, never execute imported HTML.
+                currentMarkdown = [...template.content.childNodes].map(toMarkdown).join("\n");
+                storageSet(KEY, currentMarkdown);
+            }
+        }
+        editor.innerHTML = markdownToHTML(currentMarkdown);
+        updateCounts();
 
         // --- Neon themes ---
 
@@ -690,21 +802,6 @@
                 document.execCommand("insertHTML", false, "&#160;&#160;&#160;&#160;");
             }
         }, true);
-
-        // --- FPS Counter ---
-
-        let fpsVisible = false;
-        let frameCount = 0;
-        let fpsAccum = 0;
-        let lastFpsFrame = 0;
-
-        const fpsOverlay = document.getElementById("fps-overlay");
-        const fpsValue = document.getElementById("fps-value");
-
-        function toggleFPS() {
-            fpsVisible = !fpsVisible;
-            fpsOverlay.style.display = fpsVisible ? "block" : "none";
-        }
 
         // --- Plasma Canvas ---
 
@@ -821,20 +918,6 @@
         // Scroll: only re-render (no redraw of plasma math, just reposition)
         document.querySelector(".wrap").addEventListener("scroll", renderPlasma, { passive: true });
 
-        // FPS counter only — lightweight rAF
-        function fpsLoop(now) {
-            requestAnimationFrame(fpsLoop);
-            const elapsed = now - lastFpsFrame;
-            frameCount++;
-            fpsAccum += elapsed;
-            lastFpsFrame = now;
-            if (frameCount >= 30) {
-                if (fpsVisible) fpsValue.textContent = Math.round(1000 / (fpsAccum / frameCount));
-                frameCount = 0;
-                fpsAccum = 0;
-            }
-        }
-        requestAnimationFrame(fpsLoop);
     </script>
 </body>
 </html>

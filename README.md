@@ -30,3 +30,4 @@ Since Nemadeo is a single-file application, getting started is as easy as it get
 
 ## License
 This project is open-source and available under the [MIT License](LICENSE).
+

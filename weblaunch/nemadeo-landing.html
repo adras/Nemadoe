@@ -530,7 +530,7 @@
     </div>
     <p class="waitlist-note" id="hero-note">No spam. Notified when NEMADEO launches.</p>
     <p class="success-msg" id="hero-success">// you're on the list. we'll be in touch.</p>
-    <p class="counter">Already <span id="count">—</span> people waiting.</p>
+    <p class="counter" id="counterText" style="display:none">Already <span id="count">—</span> people waiting.</p>
   </div>
 
   <div class="preview-wrapper">
@@ -612,15 +612,30 @@
     el.addEventListener('mouseleave', () => ring.style.transform = 'translate(-50%,-50%) scale(1)');
   });
 
-  // Fake counter (replace with real backend later)
-  const base = 47;
-  document.getElementById('count').textContent = base + Math.floor(Math.random() * 12);
+  // Display actual saved registrations; never invent a number.
+  const waitlistBaseUrl = 'https://nemadeo.online';
+  function setWaitlistCount(value) {
+    if (!Number.isSafeInteger(value) || value < 0) return;
+    document.getElementById('count').textContent = String(value);
+    document.getElementById('counterText').style.display = '';
+  }
+  async function refreshWaitlistCount() {
+    try {
+      const response = await fetch(waitlistBaseUrl + '/waitlist/count', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      setWaitlistCount(data.count);
+    } catch (_err) {
+      // Keep the counter hidden when real data is unavailable.
+    }
+  }
+  refreshWaitlistCount();
 
   async function signup(inputId, successId, noteId) {
     const input = document.getElementById(inputId);
     const email = input.value.trim();
 
-    if (!email || !email.includes('@')) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
       input.style.borderColor = 'rgba(255,80,80,0.6)';
       setTimeout(() => input.style.borderColor = '', 1500);
       return;
@@ -631,26 +646,26 @@
     btn.disabled = true;
 
     try {
-      const res = await fetch('https://nemadeo.online/waitlist', {
+      const res = await fetch(waitlistBaseUrl + '/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
 
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
 
       // Success
       document.getElementById(noteId).style.display = 'none';
       document.getElementById(successId).style.display = 'block';
       input.parentElement.style.display = 'none';
-      const c = document.getElementById('count');
-      if (c) c.textContent = parseInt(c.textContent) + 1;
+      setWaitlistCount(data.count);
 
     } catch (err) {
       btn.textContent = 'Join waitlist';
       btn.disabled = false;
       input.style.borderColor = 'rgba(255,80,80,0.6)';
-      document.getElementById(noteId).textContent = '// something went wrong — try again';
+      document.getElementById(noteId).textContent = err.message.includes('429') ? '// too many requests — try again later' : '// something went wrong — try again';
       setTimeout(() => input.style.borderColor = '', 2000);
     }
   }
